@@ -1,32 +1,88 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, Github, FileText, Code } from "lucide-react";
+import { Smartphone, Github, FileText, Code, Database } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 import * as firebaseService from "@/services/firebaseService";
+import { seedDatabase } from "@/utils/simplified-sample-data";
 
 export default function AdminDashboard() {
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+  const { toast } = useToast();
+
   // Fetch data from Firebase
-  const { data: apps, isLoading: isLoadingApps } = useQuery({
+  const { data: apps, isLoading: isLoadingApps, refetch: refetchApps } = useQuery({
     queryKey: ["apps"],
     queryFn: firebaseService.getApps
   });
   
-  const { data: githubRepos, isLoading: isLoadingRepos } = useQuery({ 
+  const { data: githubRepos, isLoading: isLoadingRepos, refetch: refetchRepos } = useQuery({ 
     queryKey: ["github-repos"],
     queryFn: firebaseService.getGithubRepos
   });
   
-  const { data: blogPosts, isLoading: isLoadingPosts } = useQuery({
+  const { data: blogPosts, isLoading: isLoadingPosts, refetch: refetchBlogPosts } = useQuery({
     queryKey: ["blog-posts"],
     queryFn: firebaseService.getBlogPosts
   });
   
-  const { data: codeSamples, isLoading: isLoadingCodeSamples } = useQuery({
+  const { data: codeSamples, isLoading: isLoadingCodeSamples, refetch: refetchCodeSamples } = useQuery({
     queryKey: ["code-samples"],
     queryFn: firebaseService.getCodeSamples
   });
+
+  // Handle seeding the database
+  const handleSeedDatabase = async () => {
+    setIsSeeding(true);
+    setSeedResult(null);
+    
+    try {
+      const result = await seedDatabase();
+      setSeedResult(result);
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Sample data added to the database successfully!",
+        });
+        
+        // Refetch data to update the UI
+        await Promise.all([
+          refetchApps(),
+          refetchRepos(),
+          refetchBlogPosts(),
+          refetchCodeSamples()
+        ]);
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setSeedResult({
+        success: false,
+        message: (error as Error).message || "An unknown error occurred"
+      });
+      
+      toast({
+        title: "Error",
+        description: "Failed to seed database. See console for details.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   // Dashboard cards data
   const dashboardCards = [
@@ -119,6 +175,42 @@ export default function AdminDashboard() {
             <p>No blog posts found.</p>
           )}
         </div>
+      </div>
+      
+      {/* Sample Data Generator */}
+      <div className="mt-10">
+        <h2 className="text-xl font-bold mb-6">Sample Data</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Database className="mr-2 h-5 w-5" />
+              Initialize with Sample Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              Need some example content for your portfolio? Click below to populate the database with sample Android apps, GitHub repositories, blog posts, and code samples.
+            </p>
+            
+            {seedResult && (
+              <Alert variant={seedResult.success ? "default" : "destructive"}>
+                <AlertTitle>{seedResult.success ? "Success" : "Error"}</AlertTitle>
+                <AlertDescription>{seedResult.message}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleSeedDatabase}
+                disabled={isSeeding}
+                className="flex items-center gap-2"
+              >
+                <Database className="h-4 w-4" />
+                {isSeeding ? "Adding Sample Data..." : "Add Sample Data"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
