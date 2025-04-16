@@ -154,7 +154,7 @@ Modern Android architecture is about creating applications that are:
 By adopting clean architecture principles and leveraging modern Android libraries, you can build applications that stand the test of time and accommodate changing requirements.`,
     coverImageUrl: "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
     publishedAt: new Date().toISOString(),
-    author: "Jane Doe",
+    author: "Sulton UzDev",
     isFeatured: true,
     tags: ["android", "architecture", "kotlin", "mvvm"]
   },
@@ -219,7 +219,7 @@ Jetpack Compose represents a paradigm shift in Android UI development. Its decla
 As the ecosystem continues to evolve, Compose is becoming the standard for Android UI development, replacing the traditional View system and XML layouts.`,
     coverImageUrl: "https://images.unsplash.com/photo-1581276879432-15e50529f34b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
     publishedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-    author: "John Smith",
+    author: "Sulton UzDev",
     isFeatured: false,
     tags: ["android", "jetpack-compose", "ui", "material-design"]
   },
@@ -280,7 +280,7 @@ Key takeaways:
 - Write testable code by injecting dispatchers`,
     coverImageUrl: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1169&q=80",
     publishedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days ago
-    author: "Alex Johnson",
+    author: "Sulton UzDev",
     isFeatured: false,
     tags: ["kotlin", "coroutines", "android", "asynchronous"]
   }
