@@ -58,7 +58,7 @@ export default function BlogPostPage() {
   return (
     <>
       <Helmet>
-        <title>{title} | John Doe's Blog</title>
+        <title>{title} | Sulton UzDev's Blog</title>
         <meta name="description" content={content.substring(0, 160)} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={content.substring(0, 160)} />
@@ -79,11 +79,11 @@ export default function BlogPostPage() {
         <div className="flex items-center mb-8">
           <img 
             src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=50&h=50&q=80" 
-            alt="John Doe" 
+            alt="Sulton UzDev" 
             className="w-10 h-10 rounded-full mr-3"
           />
           <div>
-            <p className="font-medium">John Doe</p>
+            <p className="font-medium">Sulton UzDev</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {formattedDate} • {readTime} min read
             </p>

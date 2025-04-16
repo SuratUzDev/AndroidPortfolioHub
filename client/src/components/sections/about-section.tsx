@@ -38,7 +38,7 @@ export default function AboutSection() {
             <div className="flex items-center mb-6">
               <img 
                 src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&h=150&q=80" 
-                alt="John Doe" 
+                alt="Sulton UzDev" 
                 className="w-20 h-20 rounded-full object-cover"
               />
               <div className="ml-4">

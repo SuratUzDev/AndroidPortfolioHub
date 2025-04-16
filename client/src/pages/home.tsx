@@ -10,10 +10,10 @@ export default function Home() {
   return (
     <>
       <Helmet>
-        <title>John Doe | Android Developer</title>
+        <title>Sulton UzDev | Android Developer</title>
         <meta name="description" content="Professional Android Developer specializing in native app development. View my portfolio, open-source projects, and technical insights." />
         <meta name="keywords" content="Android Developer, Mobile Apps, Kotlin, Java, Android SDK, App Development" />
-        <meta property="og:title" content="John Doe | Android Developer" />
+        <meta property="og:title" content="Sulton UzDev | Android Developer" />
         <meta property="og:description" content="Professional Android Developer showcasing mobile applications and technical expertise" />
         <meta property="og:type" content="website" />
       </Helmet>

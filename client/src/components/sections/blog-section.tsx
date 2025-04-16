@@ -114,11 +114,11 @@ export default function BlogSection() {
                   <div className="flex items-center">
                     <img 
                       src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=50&h=50&q=80" 
-                      alt="John Doe" 
+                      alt="Sulton UzDev" 
                       className="w-10 h-10 rounded-full mr-3"
                     />
                     <div>
-                      <p className="font-medium">John Doe</p>
+                      <p className="font-medium">Sulton UzDev</p>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
                         {new Date(featuredPost.publishedAt).toLocaleDateString('en-US', { 
                           year: 'numeric', 

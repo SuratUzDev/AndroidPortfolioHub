@@ -20,7 +20,7 @@ export default function HeroSection() {
             crafting exceptional experiences
           </h1>
           <p className="text-xl text-slate-600 dark:text-slate-400 mb-8">
-            Hi, I'm John Doe. I specialize in building high-performance, user-focused 
+            Hi, I'm Sulton UzDev. I specialize in building high-performance, user-focused 
             Android applications that solve real problems.
           </p>
           <div className="flex flex-wrap gap-4">
