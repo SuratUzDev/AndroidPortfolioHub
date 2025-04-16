@@ -1,14 +1,14 @@
 // Profile Information
 export const PROFILE = {
-  name: "John Doe",
+  name: "Sulton UzDev",
   title: "Senior Android Developer",
   company: "Tech Innovations Inc.",
   location: "San Francisco, CA",
   education: "MSc in Computer Science",
-  email: "contact@johndoe.dev",
-  github: "https://github.com/johndoe",
-  twitter: "https://twitter.com/johndoe",
-  linkedin: "https://linkedin.com/in/johndoe",
+  email: "contact@sultonuzdev.dev",
+  github: "https://github.com/sultonuzdev",
+  twitter: "https://twitter.com/sultonuzdev",
+  linkedin: "https://linkedin.com/in/sultonuzdev",
   bio: "With over 7 years of experience developing Android applications, I've worked across various domains including fintech, health, productivity, and entertainment. My expertise spans from architecting robust solutions to implementing polished UIs."
 };
 

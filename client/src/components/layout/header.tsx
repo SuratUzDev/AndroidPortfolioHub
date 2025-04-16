@@ -41,7 +41,7 @@ export default function Header() {
             <div className="w-10 h-10 bg-android-green rounded-full grid place-items-center text-white">
               <FaAndroid className="text-xl" />
             </div>
-            <span className="font-inter font-bold text-xl">John Doe</span>
+            <span className="font-inter font-bold text-xl">Sulton UzDev</span>
           </a>
         </Link>
 
@@ -107,7 +107,7 @@ export default function Header() {
 
           {/* GitHub Link */}
           <a
-            href="https://github.com/johndoe"
+            href="https://github.com/sultonuzdev"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-full transition-colors"
