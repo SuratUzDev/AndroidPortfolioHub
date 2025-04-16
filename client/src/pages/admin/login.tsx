@@ -7,12 +7,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
 import { FcGoogle } from "react-icons/fc";
+import { User } from "lucide-react";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { loginWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail, loginWithGoogle, loginAsDemo } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -62,6 +63,27 @@ export default function AdminLogin() {
       toast({
         title: "Login Failed",
         description: error.message || "Failed to login with Google.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    
+    try {
+      await loginAsDemo();
+      toast({
+        title: "Demo Login",
+        description: "You are now logged in as a demo admin user.",
+      });
+      setLocation("/admin/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Demo Login Failed",
+        description: error.message || "Failed to login as demo user.",
         variant: "destructive",
       });
     } finally {
@@ -122,16 +144,29 @@ export default function AdminLogin() {
               </span>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            type="button" 
-            className="w-full flex items-center justify-center gap-2"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-          >
-            <FcGoogle className="h-5 w-5" />
-            Google
-          </Button>
+          <div className="flex flex-col space-y-2">
+            <Button 
+              variant="outline" 
+              type="button" 
+              className="w-full flex items-center justify-center gap-2"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+            >
+              <FcGoogle className="h-5 w-5" />
+              Google
+            </Button>
+            
+            <Button 
+              variant="secondary" 
+              type="button" 
+              className="w-full flex items-center justify-center gap-2"
+              onClick={handleDemoLogin}
+              disabled={loading}
+            >
+              <User className="h-5 w-5" />
+              Demo Access (admin/admin)
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>

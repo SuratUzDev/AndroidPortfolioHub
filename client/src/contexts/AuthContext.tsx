@@ -15,6 +15,7 @@ interface AuthContextType {
   loading: boolean;
   loginWithEmail: (email: string, password: string) => Promise<User>;
   loginWithGoogle: () => Promise<User>;
+  loginAsDemo: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -53,8 +54,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return result.user;
   }
 
+  // Demo login function for testing
+  async function loginAsDemo(): Promise<void> {
+    // Create a mock user object that mimics Firebase User
+    const mockUser = {
+      uid: "demo-user-123",
+      email: "admin@example.com",
+      displayName: "Admin User",
+      emailVerified: true,
+      photoURL: null,
+      isAnonymous: false,
+      metadata: {
+        creationTime: new Date().toISOString(),
+        lastSignInTime: new Date().toISOString()
+      },
+      providerData: [],
+      // Add other required properties to match Firebase User type
+      delete: () => Promise.resolve(),
+      getIdToken: () => Promise.resolve("demo-token"),
+      getIdTokenResult: () => Promise.resolve({ token: "demo-token" } as any),
+      reload: () => Promise.resolve(),
+      toJSON: () => ({}),
+      tenantId: null,
+      phoneNumber: null,
+      providerId: "demo"
+    } as unknown as User;
+    
+    // Set the mock user
+    setCurrentUser(mockUser);
+  }
+
   // Logout
   function logout(): Promise<void> {
+    // If it's a demo user, just clear it locally
+    if (currentUser?.uid === "demo-user-123") {
+      setCurrentUser(null);
+      return Promise.resolve();
+    }
+    // Otherwise, use Firebase logout
     return signOut(auth);
   }
 
@@ -75,6 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading,
     loginWithEmail,
     loginWithGoogle,
+    loginAsDemo,
     logout,
   };
 
