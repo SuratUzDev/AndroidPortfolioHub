@@ -12,6 +12,12 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 
+// Lazily import admin pages
+import AdminApps from "@/pages/admin/apps";
+import AdminAppsNew from "@/pages/admin/apps/new";
+import AdminBlogPosts from "@/pages/admin/blog-posts";
+import AdminBlogPostsNew from "@/pages/admin/blog-posts/new";
+
 function Router() {
   const [location] = useLocation();
   const isAdminRoute = location.startsWith("/admin");
@@ -23,6 +29,10 @@ function Router() {
         <Switch>
           <Route path="/admin/login" component={AdminLogin} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
+          <Route path="/admin/apps" component={AdminApps} />
+          <Route path="/admin/apps/new" component={AdminAppsNew} />
+          <Route path="/admin/blog-posts" component={AdminBlogPosts} />
+          <Route path="/admin/blog-posts/new" component={AdminBlogPostsNew} />
           {/* Add other admin routes as they are implemented */}
           <Route path="/admin/:rest*" component={AdminDashboard} />
           <Route component={NotFound} />

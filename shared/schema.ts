@@ -22,12 +22,14 @@ export const apps = pgTable("apps", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  image: text("image").notNull(),
-  rating: text("rating"),
   category: text("category").notNull(),
-  downloads: text("downloads"),
-  githubUrl: text("github_url"),
+  iconUrl: text("icon_url").notNull(),
+  screenshotUrls: text("screenshot_urls").array().default([]),
+  featured: boolean("featured").default(false),
   playStoreUrl: text("play_store_url"),
+  githubUrl: text("github_url"),
+  rating: text("rating"),
+  downloads: text("downloads"),
 });
 
 export const insertAppSchema = createInsertSchema(apps).omit({
@@ -60,13 +62,13 @@ export const blogPosts = pgTable("blog_posts", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   slug: text("slug").notNull().unique(),
-  summary: text("summary").notNull(),
+  excerpt: text("excerpt").notNull(),
   content: text("content").notNull(),
-  image: text("image").notNull(),
-  publishedAt: timestamp("published_at").notNull(),
-  readTime: integer("read_time").notNull(),
+  coverImageUrl: text("cover_image_url").notNull(),
+  publishedAt: text("published_at").notNull(),
+  author: text("author").notNull(),
   isFeatured: boolean("is_featured").default(false),
-  tags: text("tags").array().notNull(),
+  tags: text("tags").array().default([]),
 });
 
 export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
