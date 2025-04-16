@@ -1,3 +1,4 @@
+import React from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -27,6 +28,8 @@ function Router() {
     return (
       <main className="min-h-screen">
         <Switch>
+          {/* For exact '/admin' path, just show the dashboard */}
+          <Route path="/admin" component={AdminDashboard} />
           <Route path="/admin/login" component={AdminLogin} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/apps" component={AdminApps} />
