@@ -1,0 +1,31 @@
+
+    at a
+    at a
+    at https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e1af3515:337:18
+    at nav
+    at header
+    at Header (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/components/layout/header.tsx:27:39)
+    at div
+    at Router (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/App.tsx?v=2TmhEIMCW-JneD-sWpXpR:37:22)
+    at AuthProvider (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/contexts/AuthContext.tsx:37:32)
+    at QueryClientProvider (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=e1af3515:2805:3)
+    at ThemeProvider (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/components/layout/theme-provider.tsx:24:33)
+    at App
+    at ThemeProvider (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/components/layout/theme-provider.tsx?v=2TmhEIMCW-JneD-sWpXpR:24:33)
+at a
+at a
+at https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e1af3515:337:18
+at nav
+at header
+at Header (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/components/layout/header.tsx:27:39)
+at div
+at Router (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/App.tsx?v=2TmhEIMCW-JneD-sWpXpR:37:22)
+at AuthProvider (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/contexts/AuthContext.tsx:37:32)
+at QueryClientProvider (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=e1af3515:2805:3)
+at ThemeProvider (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/components/layout/theme-provider.tsx:24:33)
+at App
+at ThemeProvider (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/src/components/layout/theme-provider.tsx?v=2TmhEIMCW-JneD-sWpXpR:24:33)
+at t.value (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://7c28f87d-0756-4d6e-be1b-18fe75480c76-00-ht69sky3t24d.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
