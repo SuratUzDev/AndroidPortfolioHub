@@ -16,12 +16,16 @@ import Footer from "@/components/layout/footer";
 // Lazily import admin pages
 import AdminApps from "@/pages/admin/apps";
 import AdminAppsNew from "@/pages/admin/apps/new";
+import AdminAppsEdit from "@/pages/admin/apps/edit";
 import AdminBlogPosts from "@/pages/admin/blog-posts";
 import AdminBlogPostsNew from "@/pages/admin/blog-posts/new";
+import AdminBlogPostsEdit from "@/pages/admin/blog-posts/edit";
 import AdminCodeSamples from "@/pages/admin/code-samples";
 import AdminCodeSamplesNew from "@/pages/admin/code-samples/new";
+import AdminCodeSamplesEdit from "@/pages/admin/code-samples/edit";
 import AdminGithubRepos from "@/pages/admin/github-repos";
 import AdminGithubReposNew from "@/pages/admin/github-repos/new";
+import AdminGithubReposEdit from "@/pages/admin/github-repos/edit";
 
 function Router() {
   const [location] = useLocation();
