@@ -563,7 +563,7 @@ export default function ProfilePage() {
                       <Input
                         id={`graduationDate-${index}`}
                         type="date"
-                        value={edu.graduationDate}
+                        value={formatDateForInput(edu.graduationDate)}
                         onChange={(e) => handleEducationChange(index, 'graduationDate', e.target.value)}
                       />
                     </div>
