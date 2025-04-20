@@ -1,16 +1,18 @@
-
-import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useLocation, useParams } from "wouter";
-import { useForm } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useParams, useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { insertAppSchema } from "@shared/schema";
+import { getApp, updateApp, uploadFile } from "@/services/firebaseService";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -18,202 +20,198 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Smartphone } from "lucide-react";
-import * as firebaseService from "@/services/firebaseService";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
-import { App } from "@shared/schema";
+import { ChevronLeft, Upload } from "lucide-react";
 
-const appFormSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
-  category: z.string(),
-  playStoreUrl: z.string().url().optional().or(z.literal("")),
-  featured: z.boolean(),
+// Extend the schema for form validation
+const formSchema = insertAppSchema.extend({
   iconFile: z.instanceof(FileList).optional(),
   screenshotFiles: z.instanceof(FileList).optional(),
 });
 
-type AppFormValues = z.infer<typeof appFormSchema>;
+type FormData = z.infer<typeof formSchema>;
 
-export default function EditApp() {
+export default function EditAppPage() {
+  const { id } = useParams();
   const [, setLocation] = useLocation();
-  const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
-
-  const { data: app, isLoading } = useQuery<App>({
-    queryKey: ["app", id],
-    queryFn: () => firebaseService.getApp(id),
+  
+  // Get app data
+  const { data: app, isLoading } = useQuery({
+    queryKey: ['/api/apps', id],
+    queryFn: () => getApp(id),
   });
 
-  const form = useForm<AppFormValues>({
-    resolver: zodResolver(appFormSchema),
+  // Form
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      title: app?.title || "",
-      description: app?.description || "",
-      category: app?.category || "Productivity",
-      playStoreUrl: app?.playStoreUrl || "",
-      featured: app?.featured || false,
+      title: "",
+      description: "",
+      category: "",
+      iconUrl: "",
+      playStoreUrl: "",
+      featured: false,
+      screenshotUrls: [],
     },
   });
 
+  // Update form values when app data is loaded
+  useEffect(() => {
+    if (app) {
+      form.reset({
+        title: app.title,
+        description: app.description,
+        category: app.category,
+        iconUrl: app.iconUrl || "",
+        playStoreUrl: app.playStoreUrl || "",
+        featured: app.featured || false,
+        screenshotUrls: app.screenshotUrls || [],
+      });
+    }
+  }, [app, form]);
+
+  // Update app mutation
   const updateMutation = useMutation({
-    mutationFn: async (values: AppFormValues) => {
-      let iconUrl = app?.iconUrl;
-      if (values.iconFile?.length) {
-        setIsUploading(true);
-        iconUrl = await firebaseService.uploadFile(
-          values.iconFile[0],
-          `apps/icons/${values.title.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}`
-        );
-      }
-
+    mutationFn: async (data: FormData) => {
+      setIsUploading(true);
+      
+      let iconUrl = app?.iconUrl || "";
       let screenshotUrls = app?.screenshotUrls || [];
-      if (values.screenshotFiles?.length) {
-        setIsUploading(true);
-        const uploadPromises = Array.from(values.screenshotFiles).map((file, index) => {
-          return firebaseService.uploadFile(
-            file,
-            `apps/screenshots/${values.title.replace(/\s+/g, "-").toLowerCase()}-${index}-${Date.now()}`
-          );
-        });
-        
-        const uploadedUrls = await Promise.all(uploadPromises);
-        screenshotUrls = [...screenshotUrls, ...uploadedUrls];
+      
+      // Upload icon if provided
+      if (data.iconFile && data.iconFile.length > 0) {
+        const file = data.iconFile[0];
+        iconUrl = await uploadFile(file, `apps/${id}/icon-${Date.now()}`);
       }
-
-      return firebaseService.updateApp(id, {
-        title: values.title,
-        description: values.description,
-        category: values.category,
-        playStoreUrl: values.playStoreUrl,
-        featured: values.featured,
+      
+      // Upload screenshots if provided
+      if (data.screenshotFiles && data.screenshotFiles.length > 0) {
+        const newScreenshots = [];
+        for (let i = 0; i < data.screenshotFiles.length; i++) {
+          const file = data.screenshotFiles[i];
+          const url = await uploadFile(file, `apps/${id}/screenshot-${Date.now()}-${i}`);
+          newScreenshots.push(url);
+        }
+        screenshotUrls = [...screenshotUrls, ...newScreenshots];
+      }
+      
+      // Update app data
+      await updateApp(id, {
+        title: data.title,
+        description: data.description,
+        category: data.category,
         iconUrl,
+        playStoreUrl: data.playStoreUrl,
+        featured: data.featured,
         screenshotUrls,
       });
+      
+      setIsUploading(false);
+      return { success: true };
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/apps'] });
       toast({
-        title: "Success",
-        description: "App updated successfully!",
+        title: "App updated",
+        description: "The app has been updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["apps"] });
       setLocation("/admin/apps");
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      setIsUploading(false);
       toast({
         title: "Error",
-        description: `Failed to update app: ${error.message}`,
+        description: `Failed to update app: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
-    },
-    onSettled: () => {
-      setIsUploading(false);
-    },
+    }
   });
 
-  const onSubmit = (values: AppFormValues) => {
-    updateMutation.mutate(values);
+  const onSubmit = (data: FormData) => {
+    updateMutation.mutate(data);
   };
 
   if (isLoading) {
-    return <AdminLayout title="Edit App">Loading...</AdminLayout>;
+    return (
+      <AdminLayout title="Edit App">
+        <div className="flex justify-center py-10">Loading app data...</div>
+      </AdminLayout>
+    );
   }
 
   if (!app) {
-    return <AdminLayout title="Edit App">App not found</AdminLayout>;
+    return (
+      <AdminLayout title="Edit App">
+        <div className="text-red-500 py-10">App not found</div>
+      </AdminLayout>
+    );
   }
 
   return (
     <AdminLayout title="Edit App">
-      <div className="flex items-center mb-6">
+      <div className="mb-6">
         <Button
-          variant="ghost"
+          variant="outline"
           onClick={() => setLocation("/admin/apps")}
-          className="mr-4"
+          className="mb-4"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Apps
         </Button>
-        <h1 className="text-2xl font-bold">Edit Android App</h1>
+        <h1 className="text-2xl font-bold">Edit App</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Smartphone className="mr-2 h-5 w-5" />
-            App Details
-          </CardTitle>
+          <CardTitle>App Details</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>App Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., TaskMaster Pro" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Productivity">Productivity</SelectItem>
-                          <SelectItem value="Utilities">Utilities</SelectItem>
-                          <SelectItem value="Education">Education</SelectItem>
-                          <SelectItem value="Entertainment">Entertainment</SelectItem>
-                          <SelectItem value="Social">Social</SelectItem>
-                          <SelectItem value="Health & Fitness">Health & Fitness</SelectItem>
-                          <SelectItem value="Game">Game</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>App Title*</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter app title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>App Description</FormLabel>
+                    <FormLabel>Description*</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Describe your app and its key features..."
+                        placeholder="Enter app description"
                         className="min-h-32"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category*</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter app category (e.g., Productivity, Health)"
                         {...field}
                       />
                     </FormControl>
@@ -229,10 +227,7 @@ export default function EditApp() {
                   <FormItem>
                     <FormLabel>Google Play Store URL</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="https://play.google.com/store/apps/details?id=com.example.app"
-                        {...field}
-                      />
+                      <Input placeholder="Enter Google Play Store URL" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -245,18 +240,27 @@ export default function EditApp() {
                   name="iconFile"
                   render={({ field: { value, onChange, ...fieldProps } }) => (
                     <FormItem>
-                      <FormLabel>Update App Icon</FormLabel>
+                      <FormLabel>App Icon</FormLabel>
                       <FormControl>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => onChange(e.target.files)}
-                          {...fieldProps}
-                        />
+                        <div className="space-y-2">
+                          {app.iconUrl && (
+                            <div className="mb-2">
+                              <p className="text-sm text-gray-500 mb-1">Current icon:</p>
+                              <img
+                                src={app.iconUrl}
+                                alt="App Icon"
+                                className="w-16 h-16 rounded"
+                              />
+                            </div>
+                          )}
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            {...fieldProps}
+                            onChange={(e) => onChange(e.target.files)}
+                          />
+                        </div>
                       </FormControl>
-                      <FormDescription>
-                        Current icon will be kept if no new file is selected
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -264,21 +268,37 @@ export default function EditApp() {
 
                 <FormField
                   control={form.control}
-                  name="featured"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Featured App</FormLabel>
-                        <FormDescription>
-                          Mark this app as featured on your portfolio
-                        </FormDescription>
-                      </div>
+                  name="screenshotFiles"
+                  render={({ field: { value, onChange, ...fieldProps } }) => (
+                    <FormItem>
+                      <FormLabel>App Screenshots (multiple)</FormLabel>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <div className="space-y-2">
+                          {app.screenshotUrls && app.screenshotUrls.length > 0 && (
+                            <div className="mb-2">
+                              <p className="text-sm text-gray-500 mb-1">Current screenshots:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {app.screenshotUrls.map((url, idx) => (
+                                  <img
+                                    key={idx}
+                                    src={url}
+                                    alt={`Screenshot ${idx + 1}`}
+                                    className="w-16 h-16 object-cover rounded"
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            {...fieldProps}
+                            onChange={(e) => onChange(e.target.files)}
+                          />
+                        </div>
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -286,23 +306,21 @@ export default function EditApp() {
 
               <FormField
                 control={form.control}
-                name="screenshotFiles"
-                render={({ field: { value, onChange, ...fieldProps } }) => (
-                  <FormItem>
-                    <FormLabel>Add More Screenshots</FormLabel>
+                name="featured"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Featured App</FormLabel>
+                      <div className="text-sm text-gray-500">
+                        Display this app in featured sections
+                      </div>
+                    </div>
                     <FormControl>
-                      <Input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(e) => onChange(e.target.files)}
-                        {...fieldProps}
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormDescription>
-                      New screenshots will be added to existing ones
-                    </FormDescription>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -319,9 +337,14 @@ export default function EditApp() {
                   type="submit"
                   disabled={updateMutation.isPending || isUploading}
                 >
-                  {updateMutation.isPending || isUploading
-                    ? "Saving..."
-                    : "Save Changes"}
+                  {updateMutation.isPending || isUploading ? (
+                    <>
+                      <Upload className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update App"
+                  )}
                 </Button>
               </div>
             </form>
