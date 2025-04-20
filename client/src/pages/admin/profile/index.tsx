@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { format } from "date-fns";
 import { getProfile, updateProfile, uploadFile } from "@/services/firebaseService";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +16,24 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Upload, User, Briefcase, GraduationCap, Share2 } from "lucide-react";
+
+// Utility function to format dates for input fields
+const formatDateForInput = (date: Date | undefined | string): string => {
+  if (!date) return '';
+  
+  // If date is already a string, return it if it's in the correct format
+  if (typeof date === 'string') {
+    // Check if the string is in ISO format and convert to Date if needed
+    if (date.includes('T')) {
+      const d = new Date(date);
+      return format(d, 'yyyy-MM-dd');
+    }
+    return date;
+  }
+  
+  // Format the date as yyyy-MM-dd for input[type="date"]
+  return format(date, 'yyyy-MM-dd');
+};
 
 export default function ProfilePage() {
   const { currentUser } = useAuth();
@@ -131,7 +150,17 @@ export default function ProfilePage() {
   // Handle experience changes
   const handleExperienceChange = (index: number, field: string, value: string) => {
     const updatedExperience = [...profile.experience];
-    updatedExperience[index] = { ...updatedExperience[index], [field]: value };
+    
+    // Handle date conversions
+    if (field === 'startDate' || field === 'endDate') {
+      updatedExperience[index] = { 
+        ...updatedExperience[index], 
+        [field]: value ? new Date(value) : undefined 
+      };
+    } else {
+      updatedExperience[index] = { ...updatedExperience[index], [field]: value };
+    }
+    
     setProfile({ ...profile, experience: updatedExperience });
   };
   
@@ -156,7 +185,17 @@ export default function ProfilePage() {
   // Handle education changes
   const handleEducationChange = (index: number, field: string, value: string) => {
     const updatedEducation = [...profile.education];
-    updatedEducation[index] = { ...updatedEducation[index], [field]: value };
+    
+    // Handle date conversions
+    if (field === 'graduationDate') {
+      updatedEducation[index] = { 
+        ...updatedEducation[index], 
+        [field]: value ? new Date(value) : new Date() 
+      };
+    } else {
+      updatedEducation[index] = { ...updatedEducation[index], [field]: value };
+    }
+    
     setProfile({ ...profile, education: updatedEducation });
   };
   
@@ -421,7 +460,7 @@ export default function ProfilePage() {
                         <Input
                           id={`startDate-${index}`}
                           type="date"
-                          value={exp.startDate}
+                          value={formatDateForInput(exp.startDate)}
                           onChange={(e) => handleExperienceChange(index, 'startDate', e.target.value)}
                         />
                       </div>
@@ -431,7 +470,7 @@ export default function ProfilePage() {
                         <Input
                           id={`endDate-${index}`}
                           type="date"
-                          value={exp.endDate}
+                          value={exp.endDate ? formatDateForInput(exp.endDate) : ''}
                           onChange={(e) => handleExperienceChange(index, 'endDate', e.target.value)}
                         />
                       </div>
