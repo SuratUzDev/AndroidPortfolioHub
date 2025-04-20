@@ -4,25 +4,47 @@ import PortfolioSection from "@/components/sections/portfolio-section";
 import BlogSection from "@/components/sections/blog-section";
 import CodeSampleSection from "@/components/sections/code-sample-section";
 import ContactSection from "@/components/sections/contact-section";
-import { Helmet } from "react-helmet";
+import { SEO } from "@/components/ui/seo";
+import { useQuery } from "@tanstack/react-query";
+import { getProfile } from "@/services/firebaseService";
 
 export default function Home() {
+  // Get profile data for meta information
+  const { data: profile } = useQuery({
+    queryKey: ['/api/profile'],
+    queryFn: () => getProfile(),
+  });
+
+  const description = profile?.bio || 
+    "Professional Android Developer specializing in native app development. View my portfolio, open-source projects, and technical insights.";
+  
+  const keywords = [
+    "Android Developer", 
+    "Mobile Apps", 
+    "Kotlin", 
+    "Java", 
+    "Android SDK", 
+    "App Development",
+    ...(profile?.skills || [])
+  ];
+
   return (
     <>
-      <Helmet>
-        <title>Sulton UzDev | Android Developer</title>
-        <meta name="description" content="Professional Android Developer specializing in native app development. View my portfolio, open-source projects, and technical insights." />
-        <meta name="keywords" content="Android Developer, Mobile Apps, Kotlin, Java, Android SDK, App Development" />
-        <meta property="og:title" content="Sulton UzDev | Android Developer" />
-        <meta property="og:description" content="Professional Android Developer showcasing mobile applications and technical expertise" />
-        <meta property="og:type" content="website" />
-      </Helmet>
-      <HeroSection />
-      <AboutSection />
-      <PortfolioSection />
-      <BlogSection />
-      <CodeSampleSection />
-      <ContactSection />
+      <SEO 
+        title="Home"
+        description={description}
+        keywords={keywords}
+        ogImage={profile?.avatarUrl}
+      />
+      
+      <main className="flex flex-col min-h-screen">
+        <HeroSection />
+        <AboutSection />
+        <PortfolioSection />
+        <BlogSection />
+        <CodeSampleSection />
+        <ContactSection />
+      </main>
     </>
   );
 }

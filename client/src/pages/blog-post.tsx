@@ -1,19 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
-import { format } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Helmet } from "react-helmet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SEO } from "@/components/ui/seo";
 import { BlogPost } from "@shared/schema";
+import { getBlogPostBySlug } from "@/services/firebaseService";
+import { formatDate } from "@/utils/date-utils";
 
 export default function BlogPostPage() {
   const [match, params] = useRoute("/blog/:slug");
   const slug = params?.slug;
 
-  const { data: post, isLoading, error } = useQuery<BlogPost>({
+  const { data: post, isLoading, error } = useQuery<BlogPost | null>({
     queryKey: [`/api/blog/${slug}`],
+    queryFn: () => (slug ? getBlogPostBySlug(slug) : Promise.resolve(null)),
+    enabled: !!slug,
   });
 
   if (isLoading) {
@@ -52,19 +55,20 @@ export default function BlogPostPage() {
     );
   }
 
-  const { title, content, publishedAt, readTime, image, tags } = post;
+  const { title, content, publishedAt, author, coverImageUrl, tags } = post;
   const formattedDate = format(new Date(publishedAt), 'MMMM d, yyyy');
+  const readTime = Math.ceil(content.length / 1000); // Estimate reading time based on content length
 
   return (
     <>
-      <Helmet>
-        <title>{title} | Sulton UzDev's Blog</title>
-        <meta name="description" content={content.substring(0, 160)} />
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={content.substring(0, 160)} />
-        <meta property="og:type" content="article" />
-        <meta property="og:image" content={image} />
-      </Helmet>
+      <SEO
+        title={title}
+        description={content.substring(0, 160)}
+        ogImage={coverImageUrl}
+        articlePublishedTime={publishedAt}
+        articleAuthor={author}
+        keywords={tags || []}
+      />
 
       <div className="container mx-auto px-4 py-12">
         <Link href="/#blog">
@@ -83,7 +87,7 @@ export default function BlogPostPage() {
             className="w-10 h-10 rounded-full mr-3"
           />
           <div>
-            <p className="font-medium">Sulton UzDev</p>
+            <p className="font-medium">{author}</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {formattedDate} • {readTime} min read
             </p>
@@ -91,18 +95,20 @@ export default function BlogPostPage() {
         </div>
 
         <img 
-          src={image} 
+          src={coverImageUrl} 
           alt={title} 
           className="w-full h-auto max-h-96 object-cover rounded-xl mb-8"
         />
 
-        <div className="flex flex-wrap gap-2 mb-8">
-          {tags.map((tag, index) => (
-            <span key={index} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-sm">
-              {tag}
-            </span>
-          ))}
-        </div>
+        {tags && tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-8">
+            {tags.map((tag, index) => (
+              <span key={index} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-sm">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="prose dark:prose-invert max-w-none">
           <div dangerouslySetInnerHTML={{ __html: content }} />
