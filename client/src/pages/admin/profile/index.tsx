@@ -60,31 +60,18 @@ export default function ProfilePage() {
   // State for file upload
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   
-  // Fetch profile data
-  const { isLoading } = useQuery({
+  // Fetch profile data using React Query
+  const { data, isLoading } = useQuery({
     queryKey: ['/api/profile'],
     queryFn: getProfile
   });
   
-  // Effect to update profile state when data is fetched
+  // Update profile state when data is loaded
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await getProfile();
-        if (data) {
-          setProfile(data);
-        }
-      } catch (error) {
-        toast({
-          title: "Error loading profile",
-          description: error instanceof Error ? error.message : "Failed to load profile data",
-          variant: "destructive",
-        });
-      }
-    };
-    
-    fetchProfile();
-  }, [toast]);
+    if (data) {
+      setProfile(data);
+    }
+  }, [data]);
 
   // Update profile mutation
   const updateMutation = useMutation({
