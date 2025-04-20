@@ -307,22 +307,43 @@ export const getProfile = async (): Promise<Profile | null> => {
   return profileData as Profile;
 };
 
-export const updateProfile = async (profile: Profile): Promise<void> => {
+export const updateProfile = async (profile: Profile): Promise<Profile> => {
   console.log("Updating profile in Firebase:", profile);
   const profileDoc = doc(db, PROFILE_COLLECTION, "main");
+  
+  // Deep copy the profile to avoid reference issues
+  const profileCopy = JSON.parse(JSON.stringify(profile));
+  
+  // Define experience type
+  interface Experience {
+    company: string;
+    position: string;
+    startDate: Date | string | null | undefined;
+    endDate?: Date | string | null | undefined;
+    description: string;
+  }
+  
+  // Define education type
+  interface Education {
+    school: string;
+    degree: string;
+    field: string;
+    graduationDate: Date | string | null | undefined;
+  }
   
   // Ensure the profile object is clean and all date fields are properly converted
   // Convert Date objects to Firestore timestamps for proper storage
   const processedProfile = {
-    ...profile,
-    experience: profile.experience.map(exp => ({
+    ...profileCopy,
+    id: profileCopy.id || "main", // Ensure we have an ID
+    experience: profileCopy.experience.map((exp: Experience) => ({
       ...exp,
       startDate: exp.startDate instanceof Date ? Timestamp.fromDate(exp.startDate) : 
                 (exp.startDate ? Timestamp.fromDate(new Date(exp.startDate)) : Timestamp.fromDate(new Date())),
       endDate: exp.endDate instanceof Date ? Timestamp.fromDate(exp.endDate) : 
               (exp.endDate ? Timestamp.fromDate(new Date(exp.endDate)) : null)
     })),
-    education: profile.education.map(edu => ({
+    education: profileCopy.education.map((edu: Education) => ({
       ...edu,
       graduationDate: edu.graduationDate instanceof Date ? Timestamp.fromDate(edu.graduationDate) : 
                       (edu.graduationDate ? Timestamp.fromDate(new Date(edu.graduationDate)) : Timestamp.fromDate(new Date()))
@@ -332,9 +353,12 @@ export const updateProfile = async (profile: Profile): Promise<void> => {
   console.log("Processed profile for Firebase:", processedProfile);
   
   try {
-    await setDoc(profileDoc, processedProfile);
+    // Use setDoc with merge option to update the document
+    await setDoc(profileDoc, processedProfile, { merge: true });
     console.log("Profile updated successfully!");
-    return Promise.resolve();
+    
+    // Return the original profile with any modifications made
+    return Promise.resolve(profile);
   } catch (error) {
     console.error("Error updating profile:", error);
     return Promise.reject(error);

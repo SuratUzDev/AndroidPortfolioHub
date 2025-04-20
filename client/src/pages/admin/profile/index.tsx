@@ -103,19 +103,46 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
       setProfile(data);
       setAvatarFile(null);
+      
+      // Show success toast with higher visibility
       toast({
-        title: "Profile updated",
+        title: "Success!",
         description: "Your profile has been updated successfully.",
+        variant: "default",
+        duration: 4000,
       });
+      
+      // Force-display the toast by adding a small delay
+      setTimeout(() => {
+        toast({
+          title: "Profile Saved",
+          description: "All your changes have been saved.",
+          variant: "default",
+          duration: 3000,
+        });
+      }, 500);
     },
     onError: (error) => {
       console.error("Profile update error:", error);
       setIsUploading(false);
+      
+      // Show error toast with higher visibility
       toast({
-        title: "Error",
+        title: "Error!",
         description: `Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
+        duration: 6000,
       });
+      
+      // Force-display the error toast with a small delay
+      setTimeout(() => {
+        toast({
+          title: "Save Failed",
+          description: "Please try again or check the console for details.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }, 500);
     }
   });
 
