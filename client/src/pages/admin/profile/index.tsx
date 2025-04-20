@@ -103,11 +103,13 @@ export default function ProfilePage() {
 
   // Handle avatar file change
   const handleAvatarChange = (file: File) => {
+    console.log("Avatar file changed:", file.name);
     setAvatarFile(file);
   };
   
   // Handle avatar removal
   const handleAvatarRemove = () => {
+    console.log("Avatar removed");
     setAvatarFile(null);
     setProfile({ ...profile, avatarUrl: undefined });
   };
@@ -115,6 +117,7 @@ export default function ProfilePage() {
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting profile:", profile);
     updateMutation.mutate(profile);
   };
   

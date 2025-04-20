@@ -289,21 +289,35 @@ export const getProfile = async (): Promise<Profile | null> => {
 };
 
 export const updateProfile = async (profile: Profile): Promise<void> => {
+  console.log("Updating profile in Firebase:", profile);
   const profileDoc = doc(db, PROFILE_COLLECTION, "main");
   
+  // Ensure the profile object is clean and all date fields are properly converted
   // Convert Date objects to Firestore timestamps for proper storage
   const processedProfile = {
     ...profile,
     experience: profile.experience.map(exp => ({
       ...exp,
-      startDate: exp.startDate instanceof Date ? Timestamp.fromDate(exp.startDate) : exp.startDate,
-      endDate: exp.endDate instanceof Date ? Timestamp.fromDate(exp.endDate) : exp.endDate
+      startDate: exp.startDate instanceof Date ? Timestamp.fromDate(exp.startDate) : 
+                (exp.startDate ? Timestamp.fromDate(new Date(exp.startDate)) : Timestamp.fromDate(new Date())),
+      endDate: exp.endDate instanceof Date ? Timestamp.fromDate(exp.endDate) : 
+              (exp.endDate ? Timestamp.fromDate(new Date(exp.endDate)) : null)
     })),
     education: profile.education.map(edu => ({
       ...edu,
-      graduationDate: edu.graduationDate instanceof Date ? Timestamp.fromDate(edu.graduationDate) : edu.graduationDate
+      graduationDate: edu.graduationDate instanceof Date ? Timestamp.fromDate(edu.graduationDate) : 
+                      (edu.graduationDate ? Timestamp.fromDate(new Date(edu.graduationDate)) : Timestamp.fromDate(new Date()))
     }))
   };
   
-  return setDoc(profileDoc, processedProfile, { merge: true });
+  console.log("Processed profile for Firebase:", processedProfile);
+  
+  try {
+    await setDoc(profileDoc, processedProfile);
+    console.log("Profile updated successfully!");
+    return Promise.resolve();
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return Promise.reject(error);
+  }
 };
