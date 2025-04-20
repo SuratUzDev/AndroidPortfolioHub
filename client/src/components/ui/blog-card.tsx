@@ -1,15 +1,15 @@
-import { format } from "date-fns";
-import { ArrowRightIcon, CalendarIcon, ClockIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import { Link } from "wouter";
 import { BlogPost } from "@shared/schema";
+import { formatDate } from "@/utils/date-utils";
+import { AuthorDisplay } from "@/components/ui/author-display";
 
 interface BlogCardProps {
   post: BlogPost;
 }
 
 export default function BlogCard({ post }: BlogCardProps) {
-  const { title, slug, excerpt, coverImageUrl, publishedAt, tags } = post;
-  const formattedDate = format(new Date(publishedAt), 'MMMM d, yyyy');
+  const { title, slug, excerpt, coverImageUrl, publishedAt, author, tags } = post;
   // Default read time estimation - 1 min per 200 words
   const estimatedReadTime = Math.ceil(post.content.split(/\s+/).length / 200);
 
@@ -22,17 +22,16 @@ export default function BlogCard({ post }: BlogCardProps) {
       />
 
       <div className="p-6">
-        <div className="flex items-center mb-4 text-sm text-slate-500 dark:text-slate-400">
-          <span className="flex items-center">
-            <CalendarIcon className="mr-1 h-4 w-4" /> {formattedDate}
-          </span>
-          <span className="mx-2">•</span>
-          <span className="flex items-center">
-            <ClockIcon className="mr-1 h-4 w-4" /> {estimatedReadTime} min read
-          </span>
-        </div>
-
         <h3 className="font-inter font-semibold text-xl mb-3">{title}</h3>
+        
+        <div className="mb-4">
+          <AuthorDisplay
+            customAuthor={author}
+            publishDate={publishedAt}
+            readTime={estimatedReadTime}
+            size="sm"
+          />
+        </div>
 
         <p className="text-slate-600 dark:text-slate-400 mb-6">
           {excerpt}

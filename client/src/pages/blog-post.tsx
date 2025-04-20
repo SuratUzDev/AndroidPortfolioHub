@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "@/components/ui/seo";
+import { AuthorDisplay } from "@/components/ui/author-display";
 import { BlogPost } from "@shared/schema";
 import { getBlogPostBySlug } from "@/services/firebaseService";
 import { formatDate } from "@/utils/date-utils";
@@ -56,7 +57,7 @@ export default function BlogPostPage() {
   }
 
   const { title, content, publishedAt, author, coverImageUrl, tags } = post;
-  const formattedDate = format(new Date(publishedAt), 'MMMM d, yyyy');
+  const formattedDate = formatDate(publishedAt);
   const readTime = Math.ceil(content.length / 1000); // Estimate reading time based on content length
 
   return (
@@ -80,18 +81,13 @@ export default function BlogPostPage() {
 
         <h1 className="font-inter font-bold text-3xl md:text-4xl lg:text-5xl mb-6">{title}</h1>
         
-        <div className="flex items-center mb-8">
-          <img 
-            src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=50&h=50&q=80" 
-            alt="Sulton UzDev" 
-            className="w-10 h-10 rounded-full mr-3"
+        <div className="mb-8">
+          <AuthorDisplay 
+            customAuthor={author}
+            publishDate={publishedAt}
+            readTime={readTime}
+            size="lg"
           />
-          <div>
-            <p className="font-medium">{author}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {formattedDate} • {readTime} min read
-            </p>
-          </div>
         </div>
 
         <img 
