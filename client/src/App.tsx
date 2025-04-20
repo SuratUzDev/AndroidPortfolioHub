@@ -18,6 +18,10 @@ import AdminApps from "@/pages/admin/apps";
 import AdminAppsNew from "@/pages/admin/apps/new";
 import AdminBlogPosts from "@/pages/admin/blog-posts";
 import AdminBlogPostsNew from "@/pages/admin/blog-posts/new";
+import AdminCodeSamples from "@/pages/admin/code-samples";
+import AdminCodeSamplesNew from "@/pages/admin/code-samples/new";
+import AdminGithubRepos from "@/pages/admin/github-repos";
+import AdminGithubReposNew from "@/pages/admin/github-repos/new";
 
 function Router() {
   const [location] = useLocation();
