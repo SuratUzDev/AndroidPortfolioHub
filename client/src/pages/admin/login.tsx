@@ -3,17 +3,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useLocation } from "wouter";
-import { FcGoogle } from "react-icons/fc";
-import { User } from "lucide-react";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { loginWithEmail, loginWithGoogle, loginAsDemo } = useAuth();
+  const { loginWithEmail } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -49,47 +47,7 @@ export default function AdminLogin() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    
-    try {
-      await loginWithGoogle();
-      toast({
-        title: "Success",
-        description: "You have been logged in successfully with Google.",
-      });
-      setLocation("/admin/dashboard");
-    } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.message || "Failed to login with Google.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    
-    try {
-      await loginAsDemo();
-      toast({
-        title: "Demo Login",
-        description: "You are now logged in as a demo admin user.",
-      });
-      setLocation("/admin/dashboard");
-    } catch (error: any) {
-      toast({
-        title: "Demo Login Failed",
-        description: error.message || "Failed to login as demo user.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <div className="flex min-h-screen items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
@@ -133,41 +91,6 @@ export default function AdminLogin() {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col">
-          <div className="relative w-full mb-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">
-                Or continue with
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-col space-y-2">
-            <Button 
-              variant="outline" 
-              type="button" 
-              className="w-full flex items-center justify-center gap-2"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-            >
-              <FcGoogle className="h-5 w-5" />
-              Google
-            </Button>
-            
-            <Button 
-              variant="secondary" 
-              type="button" 
-              className="w-full flex items-center justify-center gap-2"
-              onClick={handleDemoLogin}
-              disabled={loading}
-            >
-              <User className="h-5 w-5" />
-              Demo Access (admin/admin)
-            </Button>
-          </div>
-        </CardFooter>
       </Card>
     </div>
   );
