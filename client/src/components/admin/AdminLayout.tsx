@@ -174,6 +174,13 @@ export default function AdminLayout({ children, title = "Dashboard" }: AdminLayo
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => setLocation("/admin/profile")}
+                  className="cursor-pointer"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile Settings</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>

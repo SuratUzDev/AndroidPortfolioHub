@@ -19,7 +19,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { App, BlogPost, GithubRepo, CodeSample } from "@shared/schema";
+import { App, BlogPost, GithubRepo, CodeSample, Profile } from "@shared/schema";
 
 // Collection names
 const APPS_COLLECTION = "apps";
@@ -255,7 +255,7 @@ export const deleteCodeSample = async (id: string): Promise<void> => {
 };
 
 // Profile services
-export const getProfile = async (): Promise<any | null> => {
+export const getProfile = async (): Promise<Profile | null> => {
   const profileDoc = doc(db, PROFILE_COLLECTION, "main");
   const profileSnapshot = await getDoc(profileDoc);
   
@@ -263,10 +263,10 @@ export const getProfile = async (): Promise<any | null> => {
     return null;
   }
   
-  return profileSnapshot.data();
+  return profileSnapshot.data() as Profile;
 };
 
-export const updateProfile = async (profile: any): Promise<void> => {
+export const updateProfile = async (profile: Profile): Promise<void> => {
   const profileDoc = doc(db, PROFILE_COLLECTION, "main");
   return setDoc(profileDoc, profile, { merge: true });
 };

@@ -44,12 +44,12 @@ export default function ProfilePage() {
   const { isLoading } = useQuery({
     queryKey: ['/api/profile'],
     queryFn: getProfile,
-    onSuccess: (data) => {
+    onSuccess: (data: Profile | null) => {
       if (data) {
         setProfile(data);
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error loading profile",
         description: error instanceof Error ? error.message : "Failed to load profile data",
