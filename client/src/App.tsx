@@ -38,12 +38,17 @@ function Router() {
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/apps" component={AdminApps} />
           <Route path="/admin/apps/new" component={AdminAppsNew} />
+          <Route path="/admin/apps/edit/:id" component={AdminAppsEdit} />
           <Route path="/admin/blog-posts" component={AdminBlogPosts} />
           <Route path="/admin/blog-posts/new" component={AdminBlogPostsNew} />
+          <Route path="/admin/blog-posts/edit/:id" component={AdminBlogPostsEdit} />
           <Route path="/admin/code-samples" component={AdminCodeSamples} />
           <Route path="/admin/code-samples/new" component={AdminCodeSamplesNew} />
+          <Route path="/admin/code-samples/edit/:id" component={AdminCodeSamplesEdit} />
           <Route path="/admin/github-repos" component={AdminGithubRepos} />
           <Route path="/admin/github-repos/new" component={AdminGithubReposNew} />
+          <Route path="/admin/github-repos/edit/:id" component={AdminGithubReposEdit} />
+          <Route path="/admin/profile" component={AdminProfile} />
           <Route path="/admin/:rest*" component={AdminDashboard} />
           <Route component={NotFound} />
         </Switch>

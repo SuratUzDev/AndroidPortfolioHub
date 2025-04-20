@@ -116,5 +116,41 @@ export const insertCodeSampleSchema = createInsertSchema(codeSamples).omit({
   id: true,
 });
 
+export type Profile = {
+  id: string;
+  name: string;
+  title: string;
+  bio: string;
+  email: string;
+  phone?: string;
+  location?: string;
+  avatarUrl?: string;
+  experience: {
+    company: string;
+    position: string;
+    startDate: Date;
+    endDate?: Date;
+    description: string;
+  }[];
+  education: {
+    school: string;
+    degree: string;
+    field: string;
+    graduationDate: Date;
+  }[];
+  skills: string[];
+  socialLinks: {
+    platform: string;
+    url: string;
+  }[];
+};
+
+export type CodeSample = {
+  id: number;
+  title: string;
+  language: string;
+  code: string;
+};
+
 export type InsertCodeSample = z.infer<typeof insertCodeSampleSchema>;
 export type CodeSample = typeof codeSamples.$inferSelect;
