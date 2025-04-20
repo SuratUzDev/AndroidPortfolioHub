@@ -41,8 +41,9 @@ export default function EditAppPage() {
   
   // Get app data
   const { data: app, isLoading } = useQuery({
-    queryKey: ['/api/apps', id],
-    queryFn: () => getApp(id),
+    queryKey: ['/api/apps', id || ''],
+    queryFn: () => id ? getApp(id) : Promise.resolve(null),
+    enabled: !!id
   });
 
   // Form
@@ -83,13 +84,13 @@ export default function EditAppPage() {
       let screenshotUrls = app?.screenshotUrls || [];
       
       // Upload icon if provided
-      if (data.iconFile && data.iconFile.length > 0) {
+      if (data.iconFile && data.iconFile.length > 0 && id) {
         const file = data.iconFile[0];
         iconUrl = await uploadFile(file, `apps/${id}/icon-${Date.now()}`);
       }
       
       // Upload screenshots if provided
-      if (data.screenshotFiles && data.screenshotFiles.length > 0) {
+      if (data.screenshotFiles && data.screenshotFiles.length > 0 && id) {
         const newScreenshots = [];
         for (let i = 0; i < data.screenshotFiles.length; i++) {
           const file = data.screenshotFiles[i];
@@ -100,15 +101,17 @@ export default function EditAppPage() {
       }
       
       // Update app data
-      await updateApp(id, {
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        iconUrl,
-        playStoreUrl: data.playStoreUrl,
-        featured: data.featured,
-        screenshotUrls,
-      });
+      if (id) {
+        await updateApp(id, {
+          title: data.title,
+          description: data.description,
+          category: data.category,
+          iconUrl,
+          playStoreUrl: data.playStoreUrl || "",
+          featured: !!data.featured,
+          screenshotUrls,
+        });
+      }
       
       setIsUploading(false);
       return { success: true };
@@ -227,7 +230,11 @@ export default function EditAppPage() {
                   <FormItem>
                     <FormLabel>Google Play Store URL</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter Google Play Store URL" {...field} />
+                      <Input 
+                        placeholder="Enter Google Play Store URL" 
+                        {...field} 
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -317,7 +324,7 @@ export default function EditAppPage() {
                     </div>
                     <FormControl>
                       <Switch
-                        checked={field.value}
+                        checked={!!field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
