@@ -6,6 +6,7 @@ import { getProfile, updateProfile, uploadFile } from "@/services/firebaseServic
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Profile } from "@shared/schema";
+import { formatDate, formatDateForInput } from "@/utils/date-utils";
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -15,25 +16,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { Plus, Trash2, Upload, User, Briefcase, GraduationCap, Share2 } from "lucide-react";
 
-// Utility function to format dates for input fields
-const formatDateForInput = (date: Date | undefined | string): string => {
-  if (!date) return '';
-  
-  // If date is already a string, return it if it's in the correct format
-  if (typeof date === 'string') {
-    // Check if the string is in ISO format and convert to Date if needed
-    if (date.includes('T')) {
-      const d = new Date(date);
-      return format(d, 'yyyy-MM-dd');
-    }
-    return date;
-  }
-  
-  // Format the date as yyyy-MM-dd for input[type="date"]
-  return format(date, 'yyyy-MM-dd');
-};
+// We've moved formatDateForInput to the date-utils.ts file
 
 export default function ProfilePage() {
   const { currentUser } = useAuth();
@@ -116,10 +102,14 @@ export default function ProfilePage() {
   });
 
   // Handle avatar file change
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setAvatarFile(e.target.files[0]);
-    }
+  const handleAvatarChange = (file: File) => {
+    setAvatarFile(file);
+  };
+  
+  // Handle avatar removal
+  const handleAvatarRemove = () => {
+    setAvatarFile(null);
+    setProfile({ ...profile, avatarUrl: undefined });
   };
   
   // Handle form submission
@@ -370,22 +360,20 @@ export default function ProfilePage() {
                 <div className="space-y-2">
                   <Label htmlFor="avatar">Profile Photo</Label>
                   <div className="flex items-start space-x-4">
-                    {profile.avatarUrl && (
-                      <img
-                        src={profile.avatarUrl}
-                        alt="Profile"
-                        className="w-24 h-24 rounded-full object-cover border"
-                      />
-                    )}
+                    <ImageUpload
+                      initialImageUrl={profile.avatarUrl}
+                      onImageUpload={handleAvatarChange}
+                      onImageRemove={handleAvatarRemove}
+                      variant="circle"
+                      size="lg"
+                      disabled={updateMutation.isPending || isUploading}
+                    />
                     
                     <div className="flex-1">
-                      <Input
-                        id="avatar"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarChange}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 mb-1">
+                        Upload a professional profile photo
+                      </p>
+                      <p className="text-xs text-gray-500">
                         Recommended: Square image, at least 300x300 pixels
                       </p>
                     </div>

@@ -39,6 +39,19 @@ export function formatDate(
 }
 
 /**
+ * Format a date for HTML input date fields (yyyy-MM-dd format)
+ * @param date Date object, ISO string, or timestamp
+ * @returns Date string formatted as yyyy-MM-dd
+ */
+export function formatDateForInput(
+  date: Date | string | number | null | undefined
+): string {
+  if (!date) return "";
+  
+  return formatDate(date, "yyyy-MM-dd");
+}
+
+/**
  * Format a date range (start and optional end date)
  * @param startDate Start date
  * @param endDate Optional end date
