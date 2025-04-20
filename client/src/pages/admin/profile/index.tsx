@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { Plus, Trash2, Upload, User, Briefcase, GraduationCap, Share2 } from "lucide-react";
+import { Plus, Trash2, Upload, User, Briefcase, GraduationCap, Share2, Loader2, Save } from "lucide-react";
 
 // We've moved formatDateForInput to the date-utils.ts file
 
@@ -720,19 +720,19 @@ export default function ProfilePage() {
           <Button
             type="submit"
             size="lg"
-            className="px-6"
+            className="px-6 min-w-[180px]"
             disabled={updateMutation.isPending || isUploading}
           >
             {updateMutation.isPending || isUploading ? (
-              <>
-                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
-                Saving Changes...
-              </>
+              <div className="flex items-center">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <span>Saving...</span>
+              </div>
             ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Save Profile
-              </>
+              <div className="flex items-center">
+                <Save className="mr-2 h-5 w-5" />
+                <span>Save Profile</span>
+              </div>
             )}
           </Button>
         </div>
