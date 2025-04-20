@@ -8,13 +8,15 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post }: BlogCardProps) {
-  const { title, slug, summary, image, publishedAt, readTime, tags } = post;
+  const { title, slug, excerpt, coverImageUrl, publishedAt, tags } = post;
   const formattedDate = format(new Date(publishedAt), 'MMMM d, yyyy');
+  // Default read time estimation - 1 min per 200 words
+  const estimatedReadTime = Math.ceil(post.content.split(/\s+/).length / 200);
 
   return (
     <article className="bg-white dark:bg-dark-surface rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-xl transition-all duration-300">
       <img 
-        src={image} 
+        src={coverImageUrl} 
         alt={title} 
         className="w-full h-48 object-cover"
       />
@@ -26,18 +28,18 @@ export default function BlogCard({ post }: BlogCardProps) {
           </span>
           <span className="mx-2">•</span>
           <span className="flex items-center">
-            <ClockIcon className="mr-1 h-4 w-4" /> {readTime} min read
+            <ClockIcon className="mr-1 h-4 w-4" /> {estimatedReadTime} min read
           </span>
         </div>
 
         <h3 className="font-inter font-semibold text-xl mb-3">{title}</h3>
 
         <p className="text-slate-600 dark:text-slate-400 mb-6">
-          {summary}
+          {excerpt}
         </p>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          {tags.map((tag, index) => (
+          {tags && tags.map((tag, index) => (
             <span key={index} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-xs">
               {tag}
             </span>

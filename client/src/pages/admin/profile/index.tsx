@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { getProfile, updateProfile, uploadFile } from "@/services/firebaseService";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { Profile } from "@shared/schema";
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -21,18 +22,18 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   
-  // Profile state
-  const [profile, setProfile] = useState({
+  // Profile state with properly typed initial values
+  const [profile, setProfile] = useState<Profile>({
     id: "",
     name: "Sulton UzDev",
     title: "Android Developer",
     bio: "",
     email: "",
-    phone: "",
-    location: "",
-    avatarUrl: "",
-    experience: [{ company: "", position: "", startDate: "", endDate: "", description: "" }],
-    education: [{ school: "", degree: "", field: "", graduationDate: "" }],
+    phone: undefined,
+    location: undefined,
+    avatarUrl: undefined,
+    experience: [{ company: "", position: "", startDate: new Date(), endDate: undefined, description: "" }],
+    education: [{ school: "", degree: "", field: "", graduationDate: new Date() }],
     skills: [""],
     socialLinks: [{ platform: "", url: "" }],
   });
@@ -43,20 +44,28 @@ export default function ProfilePage() {
   // Fetch profile data
   const { isLoading } = useQuery({
     queryKey: ['/api/profile'],
-    queryFn: getProfile,
-    onSuccess: (data: Profile | null) => {
-      if (data) {
-        setProfile(data);
-      }
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error loading profile",
-        description: error instanceof Error ? error.message : "Failed to load profile data",
-        variant: "destructive",
-      });
-    }
+    queryFn: getProfile
   });
+  
+  // Effect to update profile state when data is fetched
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getProfile();
+        if (data) {
+          setProfile(data);
+        }
+      } catch (error) {
+        toast({
+          title: "Error loading profile",
+          description: error instanceof Error ? error.message : "Failed to load profile data",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    fetchProfile();
+  }, [toast]);
 
   // Update profile mutation
   const updateMutation = useMutation({
@@ -132,7 +141,7 @@ export default function ProfilePage() {
       ...profile,
       experience: [
         ...profile.experience,
-        { company: "", position: "", startDate: "", endDate: "", description: "" }
+        { company: "", position: "", startDate: new Date(), endDate: undefined, description: "" }
       ]
     });
   };
@@ -157,7 +166,7 @@ export default function ProfilePage() {
       ...profile,
       education: [
         ...profile.education,
-        { school: "", degree: "", field: "", graduationDate: "" }
+        { school: "", degree: "", field: "", graduationDate: new Date() }
       ]
     });
   };

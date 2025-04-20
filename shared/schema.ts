@@ -145,12 +145,5 @@ export type Profile = {
   }[];
 };
 
-export type CodeSample = {
-  id: number;
-  title: string;
-  language: string;
-  code: string;
-};
-
 export type InsertCodeSample = z.infer<typeof insertCodeSampleSchema>;
 export type CodeSample = typeof codeSamples.$inferSelect;
