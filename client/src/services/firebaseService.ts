@@ -263,10 +263,47 @@ export const getProfile = async (): Promise<Profile | null> => {
     return null;
   }
   
-  return profileSnapshot.data() as Profile;
+  const profileData = profileSnapshot.data();
+  
+  // Convert Firestore timestamps back to Date objects
+  if (profileData) {
+    // Convert experience dates
+    if (profileData.experience && Array.isArray(profileData.experience)) {
+      profileData.experience = profileData.experience.map(exp => ({
+        ...exp,
+        startDate: exp.startDate && exp.startDate.toDate ? exp.startDate.toDate() : exp.startDate,
+        endDate: exp.endDate && exp.endDate.toDate ? exp.endDate.toDate() : exp.endDate
+      }));
+    }
+    
+    // Convert education dates
+    if (profileData.education && Array.isArray(profileData.education)) {
+      profileData.education = profileData.education.map(edu => ({
+        ...edu,
+        graduationDate: edu.graduationDate && edu.graduationDate.toDate ? edu.graduationDate.toDate() : edu.graduationDate
+      }));
+    }
+  }
+  
+  return profileData as Profile;
 };
 
 export const updateProfile = async (profile: Profile): Promise<void> => {
   const profileDoc = doc(db, PROFILE_COLLECTION, "main");
-  return setDoc(profileDoc, profile, { merge: true });
+  
+  // Convert Date objects to Firestore timestamps for proper storage
+  const processedProfile = {
+    ...profile,
+    experience: profile.experience.map(exp => ({
+      ...exp,
+      startDate: exp.startDate instanceof Date ? Timestamp.fromDate(exp.startDate) : exp.startDate,
+      endDate: exp.endDate instanceof Date ? Timestamp.fromDate(exp.endDate) : exp.endDate
+    })),
+    education: profile.education.map(edu => ({
+      ...edu,
+      graduationDate: edu.graduationDate instanceof Date ? Timestamp.fromDate(edu.graduationDate) : edu.graduationDate
+    }))
+  };
+  
+  return setDoc(profileDoc, processedProfile, { merge: true });
 };

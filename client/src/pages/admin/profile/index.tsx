@@ -61,17 +61,17 @@ export default function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   
   // Fetch profile data using React Query
-  const { data, isLoading } = useQuery({
+  const profileQuery = useQuery({
     queryKey: ['/api/profile'],
     queryFn: getProfile
   });
   
   // Update profile state when data is loaded
   useEffect(() => {
-    if (data) {
-      setProfile(data);
+    if (profileQuery.data) {
+      setProfile(profileQuery.data);
     }
-  }, [data]);
+  }, [profileQuery.data]);
 
   // Update profile mutation
   const updateMutation = useMutation({
@@ -251,7 +251,7 @@ export default function ProfilePage() {
     setProfile({ ...profile, socialLinks: updatedSocialLinks });
   };
 
-  if (isLoading) {
+  if (profileQuery.isLoading) {
     return (
       <AdminLayout title="My Profile">
         <div className="flex justify-center py-10">Loading profile data...</div>
