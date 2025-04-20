@@ -61,28 +61,45 @@ export default function ProfilePage() {
 
   // Update profile mutation
   const updateMutation = useMutation({
-    mutationFn: async (profileData: any) => {
-      setIsUploading(true);
-      
-      let avatarUrl = profile.avatarUrl;
-      
-      // Upload avatar if provided
-      if (avatarFile) {
-        avatarUrl = await uploadFile(avatarFile, `profile/avatar-${Date.now()}`);
+    mutationFn: async (profileData: Profile) => {
+      try {
+        console.log("Starting profile update mutation with data:", profileData);
+        setIsUploading(true);
+        
+        let avatarUrl = profileData.avatarUrl;
+        
+        // Upload avatar if provided
+        if (avatarFile) {
+          console.log("Avatar file detected, uploading...");
+          try {
+            avatarUrl = await uploadFile(avatarFile, `profile/avatar-${Date.now()}`);
+            console.log("Avatar uploaded successfully:", avatarUrl);
+          } catch (error) {
+            console.error("Failed to upload avatar:", error);
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            throw new Error(`Avatar upload failed: ${errorMessage}`);
+          }
+        }
+        
+        // Update profile with new avatar URL
+        const updatedProfile: Profile = {
+          ...profileData,
+          avatarUrl,
+        };
+        
+        console.log("Saving profile with data:", updatedProfile);
+        await updateProfile(updatedProfile);
+        
+        setIsUploading(false);
+        return updatedProfile;
+      } catch (error) {
+        console.error("Profile update mutation failed:", error);
+        setIsUploading(false);
+        throw error;
       }
-      
-      // Update profile with new avatar URL
-      const updatedProfile = {
-        ...profileData,
-        avatarUrl,
-      };
-      
-      await updateProfile(updatedProfile);
-      
-      setIsUploading(false);
-      return updatedProfile;
     },
     onSuccess: (data) => {
+      console.log("Profile update succeeded:", data);
       queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
       setProfile(data);
       setAvatarFile(null);
@@ -92,6 +109,7 @@ export default function ProfilePage() {
       });
     },
     onError: (error) => {
+      console.error("Profile update error:", error);
       setIsUploading(false);
       toast({
         title: "Error",
@@ -663,25 +681,31 @@ export default function ProfilePage() {
           </TabsContent>
         </Tabs>
         
-        <div className="flex justify-end mt-6 space-x-4">
+        <div className="sticky bottom-0 py-4 px-6 bg-white dark:bg-gray-900 shadow-md flex justify-end mt-6 space-x-4 z-10">
           <Button
             type="button"
             variant="outline"
             onClick={() => setLocation("/admin/dashboard")}
+            disabled={updateMutation.isPending || isUploading}
           >
             Cancel
           </Button>
           <Button
             type="submit"
+            size="lg"
+            className="px-6"
             disabled={updateMutation.isPending || isUploading}
           >
             {updateMutation.isPending || isUploading ? (
               <>
-                <Upload className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+                Saving Changes...
               </>
             ) : (
-              "Save Profile"
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Save Profile
+              </>
             )}
           </Button>
         </div>

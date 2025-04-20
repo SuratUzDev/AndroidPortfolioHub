@@ -51,28 +51,47 @@ const convertFirestoreData = <T>(
 
 // Upload a file to Firebase Storage
 export const uploadFile = async (file: File, path: string): Promise<string> => {
-  const storageRef = ref(storage, path);
-  const uploadTask = uploadBytesResumable(storageRef, file);
+  console.log(`Starting upload for file: ${file.name} to path: ${path}`);
   
-  return new Promise((resolve, reject) => {
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        // Track progress if needed
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log("Upload is " + progress + "% done");
-      },
-      (error) => {
-        // Handle unsuccessful uploads
-        reject(error);
-      },
-      async () => {
-        // Handle successful uploads
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        resolve(downloadURL);
-      }
-    );
-  });
+  if (!file) {
+    console.error("No file provided for upload");
+    return Promise.reject(new Error("No file provided for upload"));
+  }
+  
+  try {
+    const storageRef = ref(storage, path);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Track progress if needed
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload is ${progress.toFixed(2)}% done`);
+        },
+        (error) => {
+          // Handle unsuccessful uploads
+          console.error("Upload failed:", error);
+          reject(error);
+        },
+        async () => {
+          try {
+            // Handle successful uploads
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log(`Upload successful. Download URL: ${downloadURL}`);
+            resolve(downloadURL);
+          } catch (err) {
+            console.error("Failed to get download URL:", err);
+            reject(err);
+          }
+        }
+      );
+    });
+  } catch (error) {
+    console.error("Error starting upload:", error);
+    return Promise.reject(error);
+  }
 };
 
 // Delete a file from Firebase Storage
