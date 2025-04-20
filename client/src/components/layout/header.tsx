@@ -37,12 +37,12 @@ export default function Header() {
     <header className={headerClass}>
       <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/">
-          <a className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 cursor-pointer">
             <div className="w-10 h-10 bg-android-green rounded-full grid place-items-center text-white">
               <FaAndroid className="text-xl" />
             </div>
             <span className="font-inter font-bold text-xl">Sulton UzDev</span>
-          </a>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}

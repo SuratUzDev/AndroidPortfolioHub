@@ -45,10 +45,10 @@ export default function BlogCard({ post }: BlogCardProps) {
         </div>
 
         <Link href={`/blog/${slug}`}>
-          <a className="inline-flex items-center text-android-green hover:text-android-green/80 font-medium">
+          <div className="inline-flex items-center text-android-green hover:text-android-green/80 font-medium cursor-pointer">
             Read Article
             <ArrowRightIcon className="ml-2 h-4 w-4" />
-          </a>
+          </div>
         </Link>
       </div>
     </article>
