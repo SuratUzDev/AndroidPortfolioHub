@@ -36,7 +36,10 @@ function Router() {
           <Route path="/admin/apps/new" component={AdminAppsNew} />
           <Route path="/admin/blog-posts" component={AdminBlogPosts} />
           <Route path="/admin/blog-posts/new" component={AdminBlogPostsNew} />
-          {/* Add other admin routes as they are implemented */}
+          <Route path="/admin/code-samples" component={AdminCodeSamples} />
+          <Route path="/admin/code-samples/new" component={AdminCodeSamplesNew} />
+          <Route path="/admin/github-repos" component={AdminGithubRepos} />
+          <Route path="/admin/github-repos/new" component={AdminGithubReposNew} />
           <Route path="/admin/:rest*" component={AdminDashboard} />
           <Route component={NotFound} />
         </Switch>
