@@ -42,10 +42,17 @@ export default function EditBlogPostPage() {
   const [isUploading, setIsUploading] = useState(false);
   
   // Get blog post data
-  const { data: post, isLoading } = useQuery({
-    queryKey: ['/api/blog-posts', id],
-    queryFn: () => getBlogPost(id),
+  const { data: post, isLoading } = useQuery<BlogPost>({
+    queryKey: ['/api/blog', id],
   });
+
+  // Extend the form schema for this page
+  const formSchema = insertBlogPostSchema.extend({
+    coverImageFile: z.instanceof(FileList).optional(),
+    tagsString: z.string().optional(),
+  });
+
+  type FormData = z.infer<typeof formSchema>;
 
   // Form
   const form = useForm<FormData>({
@@ -80,6 +87,21 @@ export default function EditBlogPostPage() {
     }
   }, [post, form]);
 
+  // Function to handle file uploads to a cloud storage
+  // For now we'll keep the existing coverImageUrl if we don't have a real upload service
+  const handleFileUpload = async (file: File, path: string): Promise<string> => {
+    // For a real implementation, you would:
+    // 1. Upload the file to cloud storage (S3, Firebase Storage, etc.)
+    // 2. Return the public URL
+    
+    // For now, we'll just simulate the process and keep the existing URL
+    console.log(`Would upload file ${file.name} to ${path}`);
+    
+    // Temporary: create object URL for demo purposes only
+    // In a real app, replace this with actual upload code
+    return URL.createObjectURL(file);
+  };
+
   // Update blog post mutation
   const updateMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -89,30 +111,41 @@ export default function EditBlogPostPage() {
       
       // Upload cover image if provided
       if (data.coverImageFile && data.coverImageFile.length > 0) {
-        const file = data.coverImageFile[0];
-        coverImageUrl = await uploadFile(file, `blog/${id}/cover-${Date.now()}`);
+        try {
+          const file = data.coverImageFile[0];
+          const uploadedUrl = await handleFileUpload(file, `blog/${id}/cover-${Date.now()}`);
+          if (uploadedUrl) {
+            coverImageUrl = uploadedUrl;
+          }
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          // Continue with the existing cover image URL
+        }
       }
       
       // Process tags
       const tags = data.tagsString
         ? data.tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-        : null;
+        : [];
       
-      // Update blog post data
-      await updateBlogPost(id, {
-        title: data.title,
-        slug: data.slug,
-        excerpt: data.excerpt,
-        content: data.content,
-        coverImageUrl,
-        publishedAt: data.publishedAt,
-        author: data.author,
-        isFeatured: data.isFeatured,
-        tags,
+      // Update blog post data using our PostgreSQL API
+      const updatedPost = await apiRequest(`/api/blog/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          title: data.title,
+          slug: data.slug,
+          excerpt: data.excerpt,
+          content: data.content,
+          coverImageUrl,
+          publishedAt: data.publishedAt,
+          author: data.author,
+          isFeatured: data.isFeatured,
+          tags,
+        })
       });
       
       setIsUploading(false);
-      return { success: true };
+      return updatedPost;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/blog'] });

@@ -18,12 +18,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, FileText, Upload } from "lucide-react";
-import * as firebaseService from "@/services/firebaseService";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { 
+  ArrowLeft, 
+  FileText, 
+  Upload, 
+  Save, 
+  X, 
+  Check, 
+  AlertTriangle,
+  RefreshCw,
+  ChevronLeft
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
-import { insertBlogPostSchema } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { insertBlogPostSchema, BlogPost } from "@shared/schema";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Helper function to generate a slug from a title
 function generateSlug(title: string): string {
@@ -41,6 +51,7 @@ const blogPostFormSchema = insertBlogPostSchema.extend({
   coverImageFile: z.instanceof(FileList).optional().transform(val => val && val.length > 0 ? val[0] : undefined),
   excerpt: z.string().min(10, { message: "Excerpt must be at least 10 characters" }).max(200, { message: "Excerpt cannot exceed 200 characters" }),
   slug: z.string().min(3, { message: "Slug must be at least 3 characters" }).optional(),
+  tags: z.string().optional(),
 });
 
 type BlogPostFormValues = z.infer<typeof blogPostFormSchema>;
@@ -62,6 +73,8 @@ export default function NewBlogPost() {
       isFeatured: false,
       coverImageUrl: "",
       publishedAt: new Date().toISOString(),
+      tags: "",
+      slug: "",
     },
   });
 
@@ -72,32 +85,61 @@ export default function NewBlogPost() {
     form.setValue("slug", generatedSlug);
   }
 
+  // Function to handle file uploads to a cloud storage
+  const handleFileUpload = async (file: File, path: string): Promise<string> => {
+    // For a real implementation, you would:
+    // 1. Upload the file to cloud storage (S3, Firebase Storage, etc.)
+    // 2. Return the public URL
+    
+    console.log(`Would upload file ${file.name} to ${path}`);
+    
+    // Temporary: create object URL for demo purposes only
+    // In a real app, replace this with actual upload code
+    return URL.createObjectURL(file);
+  };
+
   // Create blog post mutation
   const createMutation = useMutation({
     mutationFn: async (values: BlogPostFormValues) => {
       // Upload cover image if provided
-      let coverImageUrl = values.coverImageUrl;
+      let coverImageUrl = values.coverImageUrl || "";
       if (values.coverImageFile) {
         setIsUploading(true);
-        coverImageUrl = await firebaseService.uploadFile(
-          values.coverImageFile,
-          `blog/covers/${values.slug || generateSlug(values.title)}-${Date.now()}`
-        );
+        try {
+          const uploadedUrl = await handleFileUpload(
+            values.coverImageFile,
+            `blog/covers/${values.slug || generateSlug(values.title)}-${Date.now()}`
+          );
+          if (uploadedUrl) {
+            coverImageUrl = uploadedUrl;
+          }
+        } catch (error) {
+          console.error("Error uploading image:", error);
+        }
       }
 
       // Ensure slug exists
       const slug = values.slug || generateSlug(values.title);
+      
+      // Process tags if provided
+      const tags = values.tags 
+        ? values.tags.split(',').map(tag => tag.trim()).filter(Boolean) 
+        : [];
 
-      // Create blog post with uploaded image URL
-      return firebaseService.createBlogPost({
-        title: values.title,
-        content: values.content,
-        excerpt: values.excerpt,
-        author: values.author,
-        isFeatured: values.isFeatured,
-        slug,
-        coverImageUrl,
-        publishedAt: values.publishedAt,
+      // Create blog post with uploaded image URL using PostgreSQL API
+      return apiRequest<BlogPost>('/api/blog', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: values.title,
+          content: values.content,
+          excerpt: values.excerpt,
+          author: values.author,
+          isFeatured: values.isFeatured,
+          slug,
+          coverImageUrl,
+          publishedAt: values.publishedAt,
+          tags
+        })
       });
     },
     onSuccess: () => {
@@ -105,13 +147,14 @@ export default function NewBlogPost() {
         title: "Success",
         description: "Blog post created successfully!",
       });
-      queryClient.invalidateQueries({ queryKey: ["blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/blog'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/blog/featured'] });
       setLocation("/admin/blog-posts");
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: `Failed to create blog post: ${error.message}`,
+        description: `Failed to create blog post: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     },
@@ -238,6 +281,26 @@ export default function NewBlogPost() {
                     </FormControl>
                     <FormDescription>
                       A short summary that appears in blog listings (max 200 characters)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tags</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Android, Kotlin, Jetpack Compose, Development"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enter tags separated by commas. These help with categorizing and filtering your blog posts.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
