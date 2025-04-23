@@ -15,7 +15,7 @@ import {
   Pencil,
   Edit
 } from "lucide-react";
-import { Link as RouterLink } from "wouter";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
