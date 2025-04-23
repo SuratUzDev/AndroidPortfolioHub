@@ -2,13 +2,22 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, Github, FileText, Code, Database } from "lucide-react";
+import { 
+  Smartphone, 
+  Github, 
+  FileText, 
+  Code, 
+  Database, 
+  LineChart, 
+  Clock, 
+  Activity, 
+  Settings 
+} from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import * as firebaseService from "@/services/firebaseService";
-import { seedDatabase } from "@/utils/simplified-sample-data";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function AdminDashboard() {
   const [isSeeding, setIsSeeding] = useState(false);
@@ -18,56 +27,55 @@ export default function AdminDashboard() {
   } | null>(null);
   const { toast } = useToast();
 
-  // Fetch data from Firebase
+  // Fetch data from PostgreSQL API
   const { data: apps, isLoading: isLoadingApps, refetch: refetchApps } = useQuery({
-    queryKey: ["apps"],
-    queryFn: firebaseService.getApps
+    queryKey: ['/api/apps'],
+    queryFn: () => apiRequest('/api/apps')
   });
   
   const { data: githubRepos, isLoading: isLoadingRepos, refetch: refetchRepos } = useQuery({ 
-    queryKey: ["github-repos"],
-    queryFn: firebaseService.getGithubRepos
+    queryKey: ['/api/github-repos'],
+    queryFn: () => apiRequest('/api/github-repos')
   });
   
   const { data: blogPosts, isLoading: isLoadingPosts, refetch: refetchBlogPosts } = useQuery({
-    queryKey: ["blog-posts"],
-    queryFn: firebaseService.getBlogPosts
+    queryKey: ['/api/blog'],
+    queryFn: () => apiRequest('/api/blog')
   });
   
   const { data: codeSamples, isLoading: isLoadingCodeSamples, refetch: refetchCodeSamples } = useQuery({
-    queryKey: ["code-samples"],
-    queryFn: firebaseService.getCodeSamples
+    queryKey: ['/api/code-samples'],
+    queryFn: () => apiRequest('/api/code-samples')
   });
 
-  // Handle seeding the database
+  // Handle seeding the database using PostgreSQL migration endpoint
   const handleSeedDatabase = async () => {
     setIsSeeding(true);
     setSeedResult(null);
     
     try {
-      const result = await seedDatabase();
-      setSeedResult(result);
+      // Call the migration endpoint
+      const result = await apiRequest('/api/admin/migrate', {
+        method: 'POST'
+      });
       
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Sample data added to the database successfully!",
-        });
-        
-        // Refetch data to update the UI
-        await Promise.all([
-          refetchApps(),
-          refetchRepos(),
-          refetchBlogPosts(),
-          refetchCodeSamples()
-        ]);
-      } else {
-        toast({
-          title: "Error",
-          description: result.message,
-          variant: "destructive",
-        });
-      }
+      setSeedResult({
+        success: true,
+        message: result.message || "Sample data added successfully!"
+      });
+      
+      toast({
+        title: "Success",
+        description: "Sample data added to the database successfully!",
+      });
+      
+      // Refetch data to update the UI
+      await Promise.all([
+        refetchApps(),
+        refetchRepos(),
+        refetchBlogPosts(),
+        refetchCodeSamples()
+      ]);
     } catch (error) {
       setSeedResult({
         success: false,
