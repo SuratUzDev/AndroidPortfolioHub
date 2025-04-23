@@ -891,4 +891,7 @@ fun AnimatedCounter(
   }
 }
 
-export const storage = new MemStorage();
+import { DatabaseStorage } from "./postgres-storage";
+
+// Use the new PostgreSQL database storage
+export const storage = new DatabaseStorage();

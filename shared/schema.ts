@@ -126,24 +126,10 @@ export const profiles = pgTable("profiles", {
   phone: text("phone"),
   location: text("location"),
   avatarUrl: text("avatar_url"),
-  experience: text("experience").notNull().$type<{
-    company: string;
-    position: string;
-    startDate: string;
-    endDate?: string;
-    description: string;
-  }[]>(),
-  education: text("education").notNull().$type<{
-    school: string;
-    degree: string;
-    field: string;
-    graduationDate: string;
-  }[]>(),
+  experience: text("experience").notNull(), // Stored as JSON string
+  education: text("education").notNull(),   // Stored as JSON string
   skills: text("skills").array().default([]),
-  socialLinks: text("social_links").notNull().$type<{
-    platform: string;
-    url: string;
-  }[]>(),
+  socialLinks: text("social_links").notNull(), // Stored as JSON string
 });
 
 export const insertProfileSchema = createInsertSchema(profiles).omit({
@@ -151,7 +137,37 @@ export const insertProfileSchema = createInsertSchema(profiles).omit({
 });
 
 export type InsertProfile = z.infer<typeof insertProfileSchema>;
-export type Profile = typeof profiles.$inferSelect;
+export type DbProfile = typeof profiles.$inferSelect;
+
+// For backwards compatibility, also maintain the original profile type
+export type Profile = {
+  id: string;
+  name: string;
+  title: string;
+  bio: string;
+  email: string;
+  phone?: string;
+  location?: string;
+  avatarUrl?: string;
+  experience: {
+    company: string;
+    position: string;
+    startDate: Date;
+    endDate?: Date;
+    description: string;
+  }[];
+  education: {
+    school: string;
+    degree: string;
+    field: string;
+    graduationDate: Date;
+  }[];
+  skills: string[];
+  socialLinks: {
+    platform: string;
+    url: string;
+  }[];
+};
 
 export type InsertCodeSample = z.infer<typeof insertCodeSampleSchema>;
 export type CodeSample = typeof codeSamples.$inferSelect;

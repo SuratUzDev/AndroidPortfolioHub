@@ -124,8 +124,20 @@ export class DatabaseStorage implements IStorage {
 
   async createOrUpdateProfile(profile: Profile): Promise<Profile> {
     try {
-      // Convert complex objects to JSON strings
-      const dbProfile: InsertProfile = {
+      // Convert date objects to ISO strings before stringifying to JSON
+      const experienceJson = JSON.stringify(profile.experience.map(exp => ({
+        ...exp,
+        startDate: exp.startDate instanceof Date ? exp.startDate.toISOString() : exp.startDate,
+        endDate: exp.endDate instanceof Date ? exp.endDate.toISOString() : exp.endDate
+      })));
+      
+      const educationJson = JSON.stringify(profile.education.map(edu => ({
+        ...edu,
+        graduationDate: edu.graduationDate instanceof Date ? edu.graduationDate.toISOString() : edu.graduationDate
+      })));
+      
+      // Prepare data for database
+      const dbProfile = {
         name: profile.name,
         title: profile.title,
         bio: profile.bio,
@@ -133,8 +145,8 @@ export class DatabaseStorage implements IStorage {
         phone: profile.phone || null,
         location: profile.location || null,
         avatarUrl: profile.avatarUrl || null,
-        experience: JSON.stringify(profile.experience),
-        education: JSON.stringify(profile.education),
+        experience: experienceJson,
+        education: educationJson,
         skills: profile.skills,
         socialLinks: JSON.stringify(profile.socialLinks),
       };

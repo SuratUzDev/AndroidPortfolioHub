@@ -25,9 +25,16 @@ export function convertDbProfile(dbProfile: schema.DbProfile): schema.Profile {
     phone: dbProfile.phone || undefined,
     location: dbProfile.location || undefined,
     avatarUrl: dbProfile.avatarUrl || undefined,
-    experience: JSON.parse(dbProfile.experience),
-    education: JSON.parse(dbProfile.education),
+    experience: JSON.parse(dbProfile.experience || '[]').map((exp: any) => ({
+      ...exp,
+      startDate: exp.startDate ? new Date(exp.startDate) : new Date(),
+      endDate: exp.endDate ? new Date(exp.endDate) : undefined
+    })),
+    education: JSON.parse(dbProfile.education || '[]').map((edu: any) => ({
+      ...edu,
+      graduationDate: edu.graduationDate ? new Date(edu.graduationDate) : new Date()
+    })),
     skills: dbProfile.skills || [],
-    socialLinks: JSON.parse(dbProfile.socialLinks),
+    socialLinks: JSON.parse(dbProfile.socialLinks || '[]'),
   };
 }
