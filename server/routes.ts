@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { contactFormSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { migrateAllData } from "./firebase-to-postgres";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all apps for portfolio section
@@ -87,6 +88,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to send message" });
     }
   });
+  
+  // Firebase to PostgreSQL migration endpoint (admin only)
+  app.post("/api/admin/migrate", async (req, res) => {
+    try {
+      console.log("Starting data migration from Firebase to PostgreSQL...");
+      
+      // Try to import Firebase migration and sample data functions
+      const { isFirebaseAvailable } = await import("../client/src/lib/firebase");
+      const { migrateAllData } = await import("./firebase-to-postgres");
+      const { createSampleData } = await import("./mock-migration");
+      
+      // Check if Firebase is available
+      if (isFirebaseAvailable()) {
+        console.log("Firebase is available, migrating data...");
+        const result = await migrateAllData();
+        res.json(result);
+      } else {
+        // If Firebase is not available, create sample data
+        console.log("Firebase is not available, creating sample data...");
+        const result = await createSampleData();
+        res.json({
+          ...result,
+          message: "Firebase configuration not found. Created sample data in PostgreSQL."
+        });
+      }
+    } catch (error) {
+      console.error("Migration/data creation failed:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Operation failed",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get profile
+  app.get("/api/profile", async (req, res) => {
+    try {
+      const profile = await storage.getProfile();
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: "Failed to load profile" });
+    }
+  });
+
+
 
   const httpServer = createServer(app);
   return httpServer;

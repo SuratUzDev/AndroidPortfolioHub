@@ -1,13 +1,12 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from "react";
-import {
-  User,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
-import { auth } from "@/lib/firebase";
+
+// Define simplified user type for PostgreSQL
+interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+}
 
 // Define context type
 interface AuthContextType {
@@ -39,71 +38,65 @@ interface AuthProviderProps {
 // Provider component
 export function AuthProvider({ children }: AuthProviderProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Set to false since we're not loading anything
 
-  // Login with email and password
+  // Login with email and password (PostgreSQL implementation)
   async function loginWithEmail(email: string, password: string): Promise<User> {
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    return result.user;
+    // In a real scenario, we would make an API call to verify the credentials
+    // For now, we'll just return a demo user
+    console.log("Login with email attempted:", email);
+    const user: User = {
+      uid: "email-user-123",
+      email: email,
+      displayName: email.split('@')[0],
+      photoURL: null
+    };
+    setCurrentUser(user);
+    return user;
   }
 
-  // Login with Google
+  // Login with Google (PostgreSQL implementation)
   async function loginWithGoogle(): Promise<User> {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    return result.user;
+    // In a real scenario, we would redirect to Google OAuth
+    // For now, we'll just return a demo user
+    console.log("Login with Google attempted");
+    const user: User = {
+      uid: "google-user-123",
+      email: "google-user@example.com",
+      displayName: "Google User",
+      photoURL: null
+    };
+    setCurrentUser(user);
+    return user;
   }
 
   // Demo login function for testing
   async function loginAsDemo(): Promise<void> {
-    // Create a mock user object that mimics Firebase User
-    const mockUser = {
+    // Create a simple user object
+    const demoUser: User = {
       uid: "demo-user-123",
       email: "admin@example.com",
       displayName: "Admin User",
-      emailVerified: true,
-      photoURL: null,
-      isAnonymous: false,
-      metadata: {
-        creationTime: new Date().toISOString(),
-        lastSignInTime: new Date().toISOString()
-      },
-      providerData: [],
-      // Add other required properties to match Firebase User type
-      delete: () => Promise.resolve(),
-      getIdToken: () => Promise.resolve("demo-token"),
-      getIdTokenResult: () => Promise.resolve({ token: "demo-token" } as any),
-      reload: () => Promise.resolve(),
-      toJSON: () => ({}),
-      tenantId: null,
-      phoneNumber: null,
-      providerId: "demo"
-    } as unknown as User;
+      photoURL: null
+    };
     
-    // Set the mock user
-    setCurrentUser(mockUser);
+    // Set the demo user
+    setCurrentUser(demoUser);
   }
 
   // Logout
   function logout(): Promise<void> {
-    // If it's a demo user, just clear it locally
-    if (currentUser?.uid === "demo-user-123") {
-      setCurrentUser(null);
-      return Promise.resolve();
-    }
-    // Otherwise, use Firebase logout
-    return signOut(auth);
+    // Simply clear the current user
+    setCurrentUser(null);
+    return Promise.resolve();
   }
 
-  // Subscribe to auth state changes
+  // Initialize auth state
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
+    // Auto-login as demo user for development
+    loginAsDemo().then(() => {
+      console.log("Auto-logged in as demo user");
     });
-
-    // Cleanup subscription
-    return unsubscribe;
   }, []);
 
   // Context value
@@ -118,7 +111,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

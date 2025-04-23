@@ -5,6 +5,7 @@ import {
   getDocs,
   Timestamp,
   DocumentData,
+  Firestore
 } from "firebase/firestore";
 import { db as firebaseDb } from "../client/src/lib/firebase";
 import { db as postgresDb } from "./db";
@@ -18,6 +19,11 @@ const BLOG_POSTS_COLLECTION = "blogPosts";
 const GITHUB_REPOS_COLLECTION = "githubRepos";
 const CODE_SAMPLES_COLLECTION = "codeSamples";
 const PROFILE_COLLECTION = "profile";
+
+// Check if Firebase is available
+function isFirebaseAvailable(): boolean {
+  return firebaseDb !== null && firebaseDb !== undefined;
+}
 
 // Helper function to convert Firebase timestamp to string dates
 function convertTimestampsToDates(data: any): any {
@@ -69,8 +75,13 @@ function convertTimestampsToDates(data: any): any {
 export async function migrateApps() {
   console.log("Migrating apps...");
   try {
+    if (!isFirebaseAvailable()) {
+      console.error("Firebase is not initialized. Cannot migrate apps.");
+      return;
+    }
+    
     // Get all apps from Firebase
-    const appsCollection = collection(firebaseDb, APPS_COLLECTION);
+    const appsCollection = collection(firebaseDb as Firestore, APPS_COLLECTION);
     const appsSnapshot = await getDocs(appsCollection);
     const appsData = appsSnapshot.docs.map(doc => {
       const data = doc.data();
@@ -91,7 +102,7 @@ export async function migrateApps() {
         title: appData.title,
         description: appData.description,
         category: appData.category || "Unknown",
-        iconUrl: appData.iconUrl || appData.image || "",
+        iconUrl: appData.iconUrl || "",
         screenshotUrls: appData.screenshotUrls || [],
         featured: appData.featured || false,
         playStoreUrl: appData.playStoreUrl || null,
@@ -111,8 +122,13 @@ export async function migrateApps() {
 export async function migrateGithubRepos() {
   console.log("Migrating GitHub repositories...");
   try {
+    if (!isFirebaseAvailable()) {
+      console.error("Firebase is not initialized. Cannot migrate GitHub repositories.");
+      return;
+    }
+    
     // Get all repos from Firebase
-    const reposCollection = collection(firebaseDb, GITHUB_REPOS_COLLECTION);
+    const reposCollection = collection(firebaseDb as Firestore, GITHUB_REPOS_COLLECTION);
     const reposSnapshot = await getDocs(reposCollection);
     const reposData = reposSnapshot.docs.map(doc => {
       const data = doc.data();
@@ -148,8 +164,13 @@ export async function migrateGithubRepos() {
 export async function migrateBlogPosts() {
   console.log("Migrating blog posts...");
   try {
+    if (!isFirebaseAvailable()) {
+      console.error("Firebase is not initialized. Cannot migrate blog posts.");
+      return;
+    }
+    
     // Get all blog posts from Firebase
-    const postsCollection = collection(firebaseDb, BLOG_POSTS_COLLECTION);
+    const postsCollection = collection(firebaseDb as Firestore, BLOG_POSTS_COLLECTION);
     const postsSnapshot = await getDocs(postsCollection);
     const postsData = postsSnapshot.docs.map(doc => {
       const data = doc.data();
@@ -170,7 +191,7 @@ export async function migrateBlogPosts() {
         slug: postData.slug,
         excerpt: postData.excerpt || postData.summary || "",
         content: postData.content,
-        coverImageUrl: postData.coverImageUrl || postData.image || "",
+        coverImageUrl: postData.coverImageUrl || "",
         publishedAt: postData.publishedAt || new Date().toISOString(),
         author: postData.author || "Sulton UzDev",
         isFeatured: postData.isFeatured || false,
@@ -188,8 +209,13 @@ export async function migrateBlogPosts() {
 export async function migrateCodeSamples() {
   console.log("Migrating code samples...");
   try {
+    if (!isFirebaseAvailable()) {
+      console.error("Firebase is not initialized. Cannot migrate code samples.");
+      return;
+    }
+    
     // Get all code samples from Firebase
-    const samplesCollection = collection(firebaseDb, CODE_SAMPLES_COLLECTION);
+    const samplesCollection = collection(firebaseDb as Firestore, CODE_SAMPLES_COLLECTION);
     const samplesSnapshot = await getDocs(samplesCollection);
     const samplesData = samplesSnapshot.docs.map(doc => {
       const data = doc.data();
@@ -222,8 +248,13 @@ export async function migrateCodeSamples() {
 export async function migrateProfile() {
   console.log("Migrating profile...");
   try {
+    if (!isFirebaseAvailable()) {
+      console.error("Firebase is not initialized. Cannot migrate profile.");
+      return;
+    }
+    
     // Get profile from Firebase (usually stored as a single document)
-    const profileDocRef = doc(firebaseDb, PROFILE_COLLECTION, "main");
+    const profileDocRef = doc(firebaseDb as Firestore, PROFILE_COLLECTION, "main");
     const profileSnapshot = await getDoc(profileDocRef);
     
     if (!profileSnapshot.exists()) {
@@ -260,6 +291,15 @@ export async function migrateAllData() {
   console.log("Starting migration from Firebase to PostgreSQL...");
   
   try {
+    // Check if Firebase is available
+    if (!isFirebaseAvailable()) {
+      console.error("Firebase is not initialized. Cannot proceed with migration.");
+      return { 
+        success: false, 
+        message: "Firebase is not initialized. Check your Firebase configuration." 
+      };
+    }
+    
     await migrateApps();
     await migrateGithubRepos();
     await migrateBlogPosts();
@@ -267,7 +307,13 @@ export async function migrateAllData() {
     await migrateProfile();
     
     console.log("Migration completed successfully!");
+    return { success: true, message: "Migration completed successfully!" };
   } catch (error) {
     console.error("Migration failed:", error);
+    return { 
+      success: false, 
+      message: "Migration failed", 
+      error: error instanceof Error ? error.message : String(error) 
+    };
   }
 }
