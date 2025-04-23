@@ -28,24 +28,20 @@ export default function AdminDashboard() {
   const { toast } = useToast();
 
   // Fetch data from PostgreSQL API
-  const { data: apps, isLoading: isLoadingApps, refetch: refetchApps } = useQuery({
+  const { data: apps = [], isLoading: isLoadingApps, refetch: refetchApps } = useQuery<any[]>({
     queryKey: ['/api/apps'],
-    queryFn: () => apiRequest('/api/apps')
   });
   
-  const { data: githubRepos, isLoading: isLoadingRepos, refetch: refetchRepos } = useQuery({ 
+  const { data: githubRepos = [], isLoading: isLoadingRepos, refetch: refetchRepos } = useQuery<any[]>({ 
     queryKey: ['/api/github-repos'],
-    queryFn: () => apiRequest('/api/github-repos')
   });
   
-  const { data: blogPosts, isLoading: isLoadingPosts, refetch: refetchBlogPosts } = useQuery({
+  const { data: blogPosts = [], isLoading: isLoadingPosts, refetch: refetchBlogPosts } = useQuery<any[]>({
     queryKey: ['/api/blog'],
-    queryFn: () => apiRequest('/api/blog')
   });
   
-  const { data: codeSamples, isLoading: isLoadingCodeSamples, refetch: refetchCodeSamples } = useQuery({
+  const { data: codeSamples = [], isLoading: isLoadingCodeSamples, refetch: refetchCodeSamples } = useQuery<any[]>({
     queryKey: ['/api/code-samples'],
-    queryFn: () => apiRequest('/api/code-samples')
   });
 
   // Handle seeding the database using PostgreSQL migration endpoint
@@ -125,10 +121,16 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <AdminLayout title="Dashboard">
+    <AdminLayout title="Portfolio Admin Dashboard">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Welcome to Your Portfolio Admin</h1>
+        <p className="text-muted-foreground mt-2">Manage your portfolio content and settings from this dashboard.</p>
+      </div>
+      
+      {/* Admin stats overview */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {dashboardCards.map((card, index) => (
-          <Card key={index}>
+          <Card key={index} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
               {card.icon}
@@ -145,49 +147,162 @@ export default function AdminDashboard() {
         ))}
       </div>
       
+      {/* Quick actions section */}
       <div className="mt-10">
-        <h2 className="text-xl font-bold mb-6">Quick Actions</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Link href="/admin/apps/new">
-            <Button className="w-full">New Android App</Button>
-          </Link>
-          <Link href="/admin/github-repos/new">
-            <Button className="w-full">New GitHub Repo</Button>
-          </Link>
-          <Link href="/admin/blog-posts/new">
-            <Button className="w-full">New Blog Post</Button>
-          </Link>
-          <Link href="/admin/code-samples/new">
-            <Button className="w-full">New Code Sample</Button>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">Quick Actions</h2>
+          <Link href="/admin/profile">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Edit Profile
+            </Button>
           </Link>
         </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Link href="/admin/apps/new">
+                <Button className="w-full flex items-center gap-2 h-auto py-4">
+                  <Smartphone className="h-5 w-5" />
+                  <div className="text-left">
+                    <div className="font-semibold">New App</div>
+                    <div className="text-xs opacity-70">Add a new Android app</div>
+                  </div>
+                </Button>
+              </Link>
+              <Link href="/admin/github-repos/new">
+                <Button className="w-full flex items-center gap-2 h-auto py-4">
+                  <Github className="h-5 w-5" />
+                  <div className="text-left">
+                    <div className="font-semibold">New Repo</div>
+                    <div className="text-xs opacity-70">Add a GitHub repository</div>
+                  </div>
+                </Button>
+              </Link>
+              <Link href="/admin/blog-posts/new">
+                <Button className="w-full flex items-center gap-2 h-auto py-4">
+                  <FileText className="h-5 w-5" />
+                  <div className="text-left">
+                    <div className="font-semibold">New Post</div>
+                    <div className="text-xs opacity-70">Create a blog post</div>
+                  </div>
+                </Button>
+              </Link>
+              <Link href="/admin/code-samples/new">
+                <Button className="w-full flex items-center gap-2 h-auto py-4">
+                  <Code className="h-5 w-5" />
+                  <div className="text-left">
+                    <div className="font-semibold">New Code Sample</div>
+                    <div className="text-xs opacity-70">Add a code example</div>
+                  </div>
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
-      <div className="mt-10">
-        <h2 className="text-xl font-bold mb-6">Recent Blog Posts</h2>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          {isLoadingPosts ? (
-            <p>Loading blog posts...</p>
-          ) : blogPosts && blogPosts.length > 0 ? (
-            <ul className="space-y-4">
-              {blogPosts.slice(0, 5).map((post) => (
-                <li key={post.id} className="border-b last:border-b-0 pb-4 last:pb-0">
-                  <div className="font-medium">{post.title}</div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(post.publishedAt).toLocaleDateString()}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No blog posts found.</p>
-          )}
-        </div>
+      {/* Admin insights section */}
+      <div className="grid md:grid-cols-2 gap-8 mt-10">
+        {/* Recent Blog Posts */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Clock className="mr-2 h-5 w-5" />
+              Recent Blog Posts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingPosts ? (
+              <p className="py-4 text-center">Loading blog posts...</p>
+            ) : blogPosts && blogPosts.length > 0 ? (
+              <ul className="space-y-4">
+                {blogPosts.slice(0, 5).map((post: any) => (
+                  <li key={post.id} className="border-b last:border-b-0 pb-4 last:pb-0">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">{post.title}</div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(post.publishedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <Link href={`/admin/blog-posts/edit/${post.id}`}>
+                        <Button variant="ghost" size="sm">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="py-10 text-center">
+                <p className="text-muted-foreground mb-4">No blog posts found.</p>
+                <Link href="/admin/blog-posts/new">
+                  <Button variant="outline">Create Your First Post</Button>
+                </Link>
+              </div>
+            )}
+            {blogPosts && blogPosts.length > 0 && (
+              <div className="mt-4 flex justify-end">
+                <Link href="/admin/blog-posts">
+                  <Button variant="outline">View All Posts</Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Activity className="mr-2 h-5 w-5" />
+              Portfolio Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex gap-3 items-start">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <LineChart className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Database Migration</p>
+                  <p className="text-sm text-muted-foreground">Successfully migrated from Firebase to PostgreSQL</p>
+                  <p className="text-xs text-gray-500 mt-1">Today</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 items-start">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Settings className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Admin Panel Updated</p>
+                  <p className="text-sm text-muted-foreground">Enhanced features and improved UI</p>
+                  <p className="text-xs text-gray-500 mt-1">Today</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 items-start">
+                <div className="bg-primary/10 p-2 rounded-full">
+                  <Database className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Sample Data Created</p>
+                  <p className="text-sm text-muted-foreground">Initialize your portfolio with sample content</p>
+                  <p className="text-xs text-gray-500 mt-1">Today</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Sample Data Generator */}
       <div className="mt-10">
-        <h2 className="text-xl font-bold mb-6">Sample Data</h2>
+        <h2 className="text-xl font-bold mb-6">Database Management</h2>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
