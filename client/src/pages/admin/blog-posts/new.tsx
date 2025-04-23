@@ -222,7 +222,7 @@ export default function NewBlogPost() {
                         <div className="flex items-center space-x-2">
                           <span className="text-xs text-gray-500">Auto-generate</span>
                           <Switch
-                            checked={autoSlug}
+                            checked={Boolean(autoSlug)}
                             onCheckedChange={(checked) => {
                               setAutoSlug(checked);
                               if (!checked) {
@@ -374,8 +374,8 @@ export default function NewBlogPost() {
                       </div>
                       <FormControl>
                         <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                          checked={Boolean(field.value)}
+                          onCheckedChange={(checked) => field.onChange(checked)}
                         />
                       </FormControl>
                     </FormItem>

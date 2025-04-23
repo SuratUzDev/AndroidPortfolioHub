@@ -11,9 +11,11 @@ import {
   LineChart, 
   Clock, 
   Activity, 
-  Settings 
+  Settings,
+  Pencil,
+  Edit
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link as RouterLink } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";

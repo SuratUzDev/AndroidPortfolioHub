@@ -46,14 +46,6 @@ export default function EditBlogPostPage() {
     queryKey: ['/api/blog', id],
   });
 
-  // Extend the form schema for this page
-  const formSchema = insertBlogPostSchema.extend({
-    coverImageFile: z.instanceof(FileList).optional(),
-    tagsString: z.string().optional(),
-  });
-
-  type FormData = z.infer<typeof formSchema>;
-
   // Form
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -364,8 +356,8 @@ export default function EditBlogPostPage() {
                     </div>
                     <FormControl>
                       <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
+                        checked={Boolean(field.value)}
+                        onCheckedChange={(checked) => field.onChange(checked)}
                       />
                     </FormControl>
                   </FormItem>
