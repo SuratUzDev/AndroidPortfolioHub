@@ -116,34 +116,42 @@ export const insertCodeSampleSchema = createInsertSchema(codeSamples).omit({
   id: true,
 });
 
-export type Profile = {
-  id: string;
-  name: string;
-  title: string;
-  bio: string;
-  email: string;
-  phone?: string;
-  location?: string;
-  avatarUrl?: string;
-  experience: {
+// Developer Profile schema
+export const profiles = pgTable("profiles", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  bio: text("bio").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  location: text("location"),
+  avatarUrl: text("avatar_url"),
+  experience: text("experience").notNull().$type<{
     company: string;
     position: string;
-    startDate: Date;
-    endDate?: Date;
+    startDate: string;
+    endDate?: string;
     description: string;
-  }[];
-  education: {
+  }[]>(),
+  education: text("education").notNull().$type<{
     school: string;
     degree: string;
     field: string;
-    graduationDate: Date;
-  }[];
-  skills: string[];
-  socialLinks: {
+    graduationDate: string;
+  }[]>(),
+  skills: text("skills").array().default([]),
+  socialLinks: text("social_links").notNull().$type<{
     platform: string;
     url: string;
-  }[];
-};
+  }[]>(),
+});
+
+export const insertProfileSchema = createInsertSchema(profiles).omit({
+  id: true,
+});
+
+export type InsertProfile = z.infer<typeof insertProfileSchema>;
+export type Profile = typeof profiles.$inferSelect;
 
 export type InsertCodeSample = z.infer<typeof insertCodeSampleSchema>;
 export type CodeSample = typeof codeSamples.$inferSelect;
