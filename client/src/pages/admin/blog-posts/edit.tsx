@@ -4,9 +4,8 @@ import { useParams, useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { insertBlogPostSchema } from "@shared/schema";
-import { getBlogPost, updateBlogPost, uploadFile } from "@/services/firebaseService";
-import { queryClient } from "@/lib/queryClient";
+import { insertBlogPostSchema, BlogPost } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -17,13 +16,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, Upload } from "lucide-react";
+import { ChevronLeft, Upload, RefreshCw, Check, Save, X, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Extend the schema for form validation
 const formSchema = insertBlogPostSchema.extend({
