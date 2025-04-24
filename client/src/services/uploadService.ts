@@ -1,77 +1,84 @@
-/**
- * File upload service
- * Handles local file uploads to the server
- */
+import { apiRequest } from "@/lib/queryClient";
 
 /**
- * Upload a single file to the server
+ * Uploads a single file to the server
  * @param file The file to upload
- * @param category The category folder to store the file in (e.g., 'apps', 'blog-posts')
- * @returns Promise with the URL of the uploaded file
+ * @param path The path where the file should be stored (e.g., 'profile/avatar', 'apps/screenshot')
+ * @returns A promise that resolves to the URL of the uploaded file
  */
-export const uploadFile = async (file: File, category: string): Promise<string> => {
+export async function uploadFile(file: File, path: string): Promise<string> {
   try {
+    console.log("Starting upload for file:", file.name, "to path:", path);
+    
+    // Extract category from path (e.g., 'profile' from 'profile/avatar')
+    const category = path.split('/')[0];
+    
+    // Create a FormData object to send the file
     const formData = new FormData();
     formData.append('file', file);
-
+    formData.append('path', path);
+    
+    // Make the upload request
     const response = await fetch(`/api/upload/${category}`, {
       method: 'POST',
       body: formData,
     });
-
+    
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to upload file');
+      throw new Error(errorData.message || 'Upload failed');
     }
-
+    
     const data = await response.json();
+    console.log("Upload successful, URL:", data.url);
+    
     return data.url;
   } catch (error) {
-    console.error('Error uploading file:', error);
+    console.error("Error starting upload:", error);
     throw error;
   }
-};
+}
 
 /**
- * Upload multiple files to the server
+ * Uploads multiple files to the server
  * @param files Array of files to upload
- * @param category The category folder to store the files in
- * @returns Promise with an array of URLs for the uploaded files
+ * @param path The path where the files should be stored (e.g., 'blog/images', 'apps/screenshots')
+ * @returns A promise that resolves to an array of URLs of the uploaded files
  */
-export const uploadMultipleFiles = async (files: File[], category: string): Promise<string[]> => {
+export async function uploadMultipleFiles(files: File[], path: string): Promise<string[]> {
   try {
+    console.log(`Starting upload for ${files.length} files to path:`, path);
+    
+    // Extract category from path (e.g., 'blog' from 'blog/images')
+    const category = path.split('/')[0];
+    
+    // Create a FormData object to send the files
     const formData = new FormData();
     
-    files.forEach((file) => {
+    // Append each file to the form data
+    files.forEach((file, index) => {
       formData.append('files', file);
     });
-
+    
+    formData.append('path', path);
+    
+    // Make the upload request
     const response = await fetch(`/api/upload/${category}/multiple`, {
       method: 'POST',
       body: formData,
     });
-
+    
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to upload files');
+      throw new Error(errorData.message || 'Multiple files upload failed');
     }
-
+    
     const data = await response.json();
-    return data.files.map((fileInfo: any) => fileInfo.url);
+    console.log("Multiple files upload successful, URLs:", data.urls);
+    
+    return data.urls;
   } catch (error) {
-    console.error('Error uploading multiple files:', error);
+    console.error("Error uploading multiple files:", error);
     throw error;
   }
-};
-
-/**
- * Delete a file from the server
- * Note: For a real implementation, you would need a server-side endpoint to delete files
- * Current version just logs the request
- */
-export const deleteFile = async (fileUrl: string): Promise<void> => {
-  // This is a stub - in a real app, you would implement a DELETE request to a server endpoint
-  console.log(`Would delete file at: ${fileUrl}`);
-  // For now we'll just return successfully
-  return Promise.resolve();
-};
+}

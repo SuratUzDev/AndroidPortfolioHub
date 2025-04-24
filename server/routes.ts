@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { contactFormSchema, commentFormSchema, insertAppSchema } from "@shared/schema";
+import { contactFormSchema, commentFormSchema, insertAppSchema, insertGithubRepoSchema, insertBlogPostSchema, insertCodeSampleSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { migrateAllData } from "./firebase-to-postgres";
 import { upload, handleFileUpload, handleMultipleFileUpload } from "./upload";
@@ -44,6 +44,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(repos);
     } catch (error) {
       res.status(500).json({ message: "Failed to load GitHub repositories" });
+    }
+  });
+  
+  // Create a new GitHub repo
+  app.post("/api/github-repos", async (req, res) => {
+    try {
+      const result = insertGithubRepoSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        const validationError = fromZodError(result.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const repo = await storage.createGithubRepo(result.data);
+      res.status(201).json(repo);
+    } catch (error) {
+      console.error("Error creating GitHub repo:", error);
+      res.status(500).json({ message: "Failed to create GitHub repository" });
     }
   });
 
@@ -155,6 +173,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching profile:", error);
       res.status(500).json({ message: "Failed to load profile" });
+    }
+  });
+  
+  // Update profile
+  app.post("/api/profile", async (req, res) => {
+    try {
+      const profile = req.body;
+      const updatedProfile = await storage.createOrUpdateProfile(profile);
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 
