@@ -1,6 +1,7 @@
 // No longer using Firebase for data storage
 import { apiRequest } from "@/lib/queryClient";
 import { App, BlogPost, GithubRepo, CodeSample } from "@shared/schema";
+import { downloadAndSaveImage, downloadMultipleImages } from "./imageDownloader";
 
 // Sample Apps
 const sampleApps: Omit<App, "id">[] = [
@@ -385,10 +386,23 @@ export async function seedDatabase() {
     // Only add sample data if the collections are empty
     if (appsEmpty) {
       for (const app of sampleApps) {
-        await apiRequest('/api/apps', {
-          method: 'POST',
-          body: JSON.stringify(app),
-        });
+        try {
+          // Download and save images locally
+          const localIconUrl = await downloadAndSaveImage(app.iconUrl, 'apps');
+          const localScreenshotUrls = await downloadMultipleImages(app.screenshotUrls, 'apps');
+          
+          // Create app with local image URLs
+          await apiRequest('/api/apps', {
+            method: 'POST',
+            body: JSON.stringify({
+              ...app,
+              iconUrl: localIconUrl,
+              screenshotUrls: localScreenshotUrls
+            }),
+          });
+        } catch (appError) {
+          console.error("Error adding app:", appError);
+        }
       }
       console.log("Sample apps added to database");
     }
@@ -405,10 +419,21 @@ export async function seedDatabase() {
     
     if (postsEmpty) {
       for (const post of sampleBlogPosts) {
-        await apiRequest('/api/blog', {
-          method: 'POST',
-          body: JSON.stringify(post),
-        });
+        try {
+          // Download and save cover image locally
+          const localCoverImageUrl = await downloadAndSaveImage(post.coverImageUrl, 'blog');
+          
+          // Create blog post with local image URL
+          await apiRequest('/api/blog', {
+            method: 'POST',
+            body: JSON.stringify({
+              ...post,
+              coverImageUrl: localCoverImageUrl
+            }),
+          });
+        } catch (postError) {
+          console.error("Error adding blog post:", postError);
+        }
       }
       console.log("Sample blog posts added to database");
     }

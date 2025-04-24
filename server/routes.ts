@@ -5,6 +5,7 @@ import { contactFormSchema, commentFormSchema, insertAppSchema, insertGithubRepo
 import { fromZodError } from "zod-validation-error";
 import { migrateAllData } from "./firebase-to-postgres";
 import { upload, handleFileUpload, handleMultipleFileUpload } from "./upload";
+import { downloadImage } from "./imageDownloader";
 import fs from 'fs';
 import path from 'path';
 
@@ -269,11 +270,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create a public uploads directory if it doesn't exist
+  // Create necessary uploads directories if they don't exist
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-  fs.promises.mkdir(uploadsDir, { recursive: true })
-    .then(() => console.log(`Uploads directory created: ${uploadsDir}`))
-    .catch(err => console.error(`Error creating uploads directory: ${err}`));
+  const appUploadsDir = path.join(uploadsDir, 'apps');
+  const blogUploadsDir = path.join(uploadsDir, 'blog');
+  const profileUploadsDir = path.join(uploadsDir, 'profile');
+  const generalUploadsDir = path.join(uploadsDir, 'general');
+  
+  // Create all required directories
+  Promise.all([
+    fs.promises.mkdir(uploadsDir, { recursive: true }),
+    fs.promises.mkdir(appUploadsDir, { recursive: true }),
+    fs.promises.mkdir(blogUploadsDir, { recursive: true }),
+    fs.promises.mkdir(profileUploadsDir, { recursive: true }),
+    fs.promises.mkdir(generalUploadsDir, { recursive: true })
+  ])
+    .then(() => console.log(`Uploads directories created: ${uploadsDir}`))
+    .catch(err => console.error(`Error creating uploads directories: ${err}`));
+    
+  // Serve uploaded files
+  app.get('/api/uploads/:folder/:filename', (req, res) => {
+    const { folder, filename } = req.params;
+    const filePath = path.join(uploadsDir, folder, filename);
+    
+    // Check if file exists
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: 'File not found' });
+    }
+  });
 
   // File upload endpoints
   // Single file upload
@@ -281,7 +307,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Multiple files upload
   app.post("/api/upload/:category/multiple", upload.array('files', 10), handleMultipleFileUpload);
-
+  
+  // Image download endpoint
+  app.post("/api/uploads/download", downloadImage);
 
   const httpServer = createServer(app);
   return httpServer;
