@@ -178,4 +178,91 @@ export class DatabaseStorage implements IStorage {
       throw error;
     }
   }
+
+  // Comment operations
+  async getCommentsByBlogPostId(blogPostId: number): Promise<Comment[]> {
+    try {
+      // Get only approved comments or pending comments that are top-level (not replies)
+      const commentsResult = await db
+        .select()
+        .from(comments)
+        .where(eq(comments.blogPostId, blogPostId))
+        .orderBy(desc(comments.createdAt));
+      
+      return commentsResult;
+    } catch (error) {
+      console.error("Error fetching comments for blog post:", error);
+      return [];
+    }
+  }
+
+  async getComment(id: number): Promise<Comment | undefined> {
+    try {
+      const [comment] = await db
+        .select()
+        .from(comments)
+        .where(eq(comments.id, id));
+      
+      return comment;
+    } catch (error) {
+      console.error("Error fetching comment:", error);
+      return undefined;
+    }
+  }
+
+  async createComment(comment: InsertComment): Promise<Comment> {
+    try {
+      const [newComment] = await db
+        .insert(comments)
+        .values(comment)
+        .returning();
+      
+      return newComment;
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      throw error;
+    }
+  }
+
+  async approveComment(id: number): Promise<Comment> {
+    try {
+      const [updatedComment] = await db
+        .update(comments)
+        .set({ isApproved: true })
+        .where(eq(comments.id, id))
+        .returning();
+      
+      if (!updatedComment) {
+        throw new Error(`Comment with ID ${id} not found`);
+      }
+      
+      return updatedComment;
+    } catch (error) {
+      console.error("Error approving comment:", error);
+      throw error;
+    }
+  }
+
+  async deleteComment(id: number): Promise<void> {
+    try {
+      // First, recursively delete all replies to this comment
+      const replies = await db
+        .select()
+        .from(comments)
+        .where(eq(comments.parentId, id));
+      
+      // Delete replies recursively
+      for (const reply of replies) {
+        await this.deleteComment(reply.id);
+      }
+      
+      // Then delete the comment itself
+      await db
+        .delete(comments)
+        .where(eq(comments.id, id));
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      throw error;
+    }
+  }
 }

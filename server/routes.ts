@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { contactFormSchema } from "@shared/schema";
+import { contactFormSchema, commentFormSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { migrateAllData } from "./firebase-to-postgres";
 
@@ -137,6 +137,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get comments for a blog post
+  app.get("/api/blog/:blogPostId/comments", async (req, res) => {
+    try {
+      const blogPostId = parseInt(req.params.blogPostId);
+      if (isNaN(blogPostId)) {
+        return res.status(400).json({ message: "Invalid blog post ID" });
+      }
+      
+      const comments = await storage.getCommentsByBlogPostId(blogPostId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      res.status(500).json({ message: "Failed to load comments" });
+    }
+  });
+
+  // Submit a comment on a blog post
+  app.post("/api/blog/:blogPostId/comments", async (req, res) => {
+    try {
+      const blogPostId = parseInt(req.params.blogPostId);
+      if (isNaN(blogPostId)) {
+        return res.status(400).json({ message: "Invalid blog post ID" });
+      }
+      
+      // Validate comment data
+      const result = commentFormSchema.safeParse({
+        ...req.body,
+        blogPostId
+      });
+      
+      if (!result.success) {
+        const validationError = fromZodError(result.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const comment = await storage.createComment(result.data);
+      res.status(201).json({ 
+        message: "Comment submitted successfully. It will be visible after approval.", 
+        comment 
+      });
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      res.status(500).json({ message: "Failed to submit comment" });
+    }
+  });
+
+  // Admin: Approve a comment
+  app.post("/api/admin/comments/:commentId/approve", async (req, res) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      if (isNaN(commentId)) {
+        return res.status(400).json({ message: "Invalid comment ID" });
+      }
+      
+      const comment = await storage.approveComment(commentId);
+      res.json({ 
+        message: "Comment approved successfully", 
+        comment 
+      });
+    } catch (error) {
+      console.error("Error approving comment:", error);
+      res.status(500).json({ message: "Failed to approve comment" });
+    }
+  });
+
+  // Admin: Delete a comment
+  app.delete("/api/admin/comments/:commentId", async (req, res) => {
+    try {
+      const commentId = parseInt(req.params.commentId);
+      if (isNaN(commentId)) {
+        return res.status(400).json({ message: "Invalid comment ID" });
+      }
+      
+      await storage.deleteComment(commentId);
+      res.json({ message: "Comment deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res.status(500).json({ message: "Failed to delete comment" });
+    }
+  });
 
 
   const httpServer = createServer(app);
