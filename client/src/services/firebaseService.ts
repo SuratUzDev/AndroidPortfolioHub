@@ -261,7 +261,9 @@ export const getProfile = async (): Promise<Profile | null> => {
     if (profile.experience && Array.isArray(profile.experience)) {
       profile.experience = profile.experience.map(exp => ({
         ...exp,
-        startDate: exp.startDate ? new Date(exp.startDate) : undefined,
+        // Ensure startDate is always a Date (required by the Profile type)
+        startDate: exp.startDate ? new Date(exp.startDate) : new Date(),
+        // endDate is optional so can be undefined
         endDate: exp.endDate ? new Date(exp.endDate) : undefined
       }));
     }
@@ -269,7 +271,8 @@ export const getProfile = async (): Promise<Profile | null> => {
     if (profile.education && Array.isArray(profile.education)) {
       profile.education = profile.education.map(edu => ({
         ...edu,
-        graduationDate: edu.graduationDate ? new Date(edu.graduationDate) : undefined
+        // Ensure graduationDate is always a Date (required by the Profile type)
+        graduationDate: edu.graduationDate ? new Date(edu.graduationDate) : new Date()
       }));
     }
     
@@ -285,7 +288,7 @@ export const getProfile = async (): Promise<Profile | null> => {
 export const updateProfile = async (profile: Profile): Promise<Profile> => {
   console.log("Updating profile:", profile);
   
-  // Deep copy the profile to avoid reference issues
+  // Deep copy the profile to avoid reference issues and ensure dates are serialized correctly
   const profileCopy = JSON.parse(JSON.stringify(profile));
   
   try {
@@ -294,6 +297,22 @@ export const updateProfile = async (profile: Profile): Promise<Profile> => {
       method: 'POST', // The endpoint uses POST for both create and update
       body: JSON.stringify(profileCopy),
     });
+    
+    // Process date fields in the response just like in getProfile
+    if (updatedProfile.experience && Array.isArray(updatedProfile.experience)) {
+      updatedProfile.experience = updatedProfile.experience.map(exp => ({
+        ...exp,
+        startDate: exp.startDate ? new Date(exp.startDate) : new Date(),
+        endDate: exp.endDate ? new Date(exp.endDate) : undefined
+      }));
+    }
+    
+    if (updatedProfile.education && Array.isArray(updatedProfile.education)) {
+      updatedProfile.education = updatedProfile.education.map(edu => ({
+        ...edu,
+        graduationDate: edu.graduationDate ? new Date(edu.graduationDate) : new Date()
+      }));
+    }
     
     console.log("Profile updated successfully!");
     
