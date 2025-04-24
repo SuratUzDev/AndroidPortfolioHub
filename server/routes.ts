@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { contactFormSchema, commentFormSchema } from "@shared/schema";
+import { contactFormSchema, commentFormSchema, insertAppSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { migrateAllData } from "./firebase-to-postgres";
 import { upload, handleFileUpload, handleMultipleFileUpload } from "./upload";
@@ -16,6 +16,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(apps);
     } catch (error) {
       res.status(500).json({ message: "Failed to load apps" });
+    }
+  });
+  
+  // Create a new app
+  app.post("/api/apps", async (req, res) => {
+    try {
+      const result = insertAppSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        const validationError = fromZodError(result.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const app = await storage.createApp(result.data);
+      res.status(201).json(app);
+    } catch (error) {
+      console.error("Error creating app:", error);
+      res.status(500).json({ message: "Failed to create app" });
     }
   });
 

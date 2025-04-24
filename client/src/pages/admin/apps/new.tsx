@@ -27,9 +27,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Smartphone, Upload } from "lucide-react";
-import * as firebaseService from "@/services/firebaseService";
+import { uploadFile, uploadMultipleFiles } from "@/services/uploadService";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { insertAppSchema } from "@shared/schema";
 
 // Extend the app schema with additional validation
@@ -58,6 +58,9 @@ export default function NewApp() {
       featured: false,
       iconUrl: "",
       screenshotUrls: [],
+      // Initialize file fields with undefined
+      iconFile: undefined,
+      screenshotFiles: undefined,
     },
   });
 
@@ -68,37 +71,32 @@ export default function NewApp() {
       let iconUrl = values.iconUrl;
       if (values.iconFile) {
         setIsUploading(true);
-        iconUrl = await firebaseService.uploadFile(
-          values.iconFile,
-          `apps/icons/${values.title.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}`
-        );
+        iconUrl = await uploadFile(values.iconFile, 'apps');
       }
 
       // Upload screenshots if provided
       let screenshotUrls = values.screenshotUrls || [];
       if (values.screenshotFiles && values.screenshotFiles.length > 0) {
         setIsUploading(true);
-        const uploadPromises = Array.from(values.screenshotFiles).map((file, index) => {
-          return firebaseService.uploadFile(
-            file,
-            `apps/screenshots/${values.title.replace(/\s+/g, "-").toLowerCase()}-${index}-${Date.now()}`
-          );
-        });
-        
-        const uploadedUrls = await Promise.all(uploadPromises);
+        const uploadedUrls = await uploadMultipleFiles(values.screenshotFiles, 'apps');
         screenshotUrls = [...screenshotUrls, ...uploadedUrls];
       }
 
       // Create app with uploaded image URLs
-      return firebaseService.createApp({
-        title: values.title,
-        description: values.description,
-        category: values.category,
-        playStoreUrl: values.playStoreUrl,
-        featured: values.featured,
-        iconUrl,
-        screenshotUrls,
+      const response = await apiRequest('/api/apps', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: values.title,
+          description: values.description,
+          category: values.category,
+          playStoreUrl: values.playStoreUrl,
+          featured: values.featured,
+          iconUrl,
+          screenshotUrls,
+        }),
       });
+      
+      return response;
     },
     onSuccess: () => {
       toast({
