@@ -298,21 +298,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Check if file exists
     if (fs.existsSync(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
       res.sendFile(filePath);
     } else {
       // If file doesn't exist, try a category-specific placeholder first
       const categoryPlaceholder = path.join(uploadsDir, folder, 'category-placeholder.png');
       if (fs.existsSync(categoryPlaceholder)) {
+        console.log(`Serving category placeholder for ${folder}/${filename}`);
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
         res.sendFile(categoryPlaceholder);
       } else {
         // Fall back to the main placeholder
         const betterPlaceholderPath = path.join(uploadsDir, 'better-placeholder.png');
         if (fs.existsSync(betterPlaceholderPath)) {
+          console.log(`Serving better placeholder for ${folder}/${filename}`);
+          res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
           res.sendFile(betterPlaceholderPath);
         } else {
           // Last resort: original placeholder
           const placeholderPath = path.join(uploadsDir, 'placeholder.png');
           if (fs.existsSync(placeholderPath)) {
+            console.log(`Serving original placeholder for ${folder}/${filename}`);
+            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
             res.sendFile(placeholderPath);
           } else {
             res.status(404).json({ error: 'File not found and no placeholder available' });
@@ -327,11 +334,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Try better placeholder first
     const betterPlaceholderPath = path.join(uploadsDir, 'better-placeholder.png');
     if (fs.existsSync(betterPlaceholderPath)) {
+      console.log(`Serving better placeholder for direct access`);
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
       res.sendFile(betterPlaceholderPath);
     } else {
       // Fall back to original
       const placeholderPath = path.join(uploadsDir, 'placeholder.png');
       if (fs.existsSync(placeholderPath)) {
+        console.log(`Serving original placeholder for direct access`);
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
         res.sendFile(placeholderPath);
       } else {
         res.status(404).json({ error: 'Placeholder not found' });
