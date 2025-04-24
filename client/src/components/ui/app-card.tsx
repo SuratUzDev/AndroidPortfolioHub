@@ -7,12 +7,15 @@ interface AppCardProps {
 }
 
 export default function AppCard({ app }: AppCardProps) {
-  const { title, description, image, rating, category, downloads, githubUrl, playStoreUrl } = app;
+  const { title, description, iconUrl, screenshotUrls, rating, category, downloads, githubUrl, playStoreUrl } = app;
+
+  // Use first screenshot if available, otherwise use icon
+  const displayImage = screenshotUrls?.[0] || iconUrl;
 
   return (
     <div className="app-card bg-white dark:bg-dark-surface rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-xl transition-all duration-300">
       <img 
-        src={image} 
+        src={displayImage} 
         alt={`${title} App`} 
         className="w-full h-48 object-cover"
       />
