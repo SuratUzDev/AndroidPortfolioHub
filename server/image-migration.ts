@@ -51,6 +51,37 @@ async function downloadImage(imageUrl: string, folder: string = 'general'): Prom
       return imageUrl;
     }
     
+    // For demo purposes: If the URL is example.com, create a placeholder instead of trying to download
+    if (imageUrl.includes('example.com')) {
+      // Create folder if it doesn't exist
+      const folderPath = path.join(UPLOADS_DIR, folder);
+      ensureDirectoryExists(folderPath);
+      
+      // Generate a placeholder file name
+      const fileName = `placeholder-${uuidv4()}.png`;
+      const filePath = path.join(folderPath, fileName);
+      
+      // Create a simple buffer with placeholder image data
+      // This is a tiny 1x1 pixel transparent PNG
+      const placeholderBuffer = Buffer.from([
+        0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 
+        0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 
+        0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00, 
+        0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00, 
+        0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 
+        0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
+      ]);
+      
+      // Save the placeholder image
+      fs.writeFileSync(filePath, placeholderBuffer);
+      
+      console.log(`Created placeholder for ${imageUrl} at ${filePath}`);
+      
+      // Return the local URL
+      return `/api/uploads/${folder}/${fileName}`;
+    }
+    
+    // For real URLs - download actual image
     // Create folder if it doesn't exist
     const folderPath = path.join(UPLOADS_DIR, folder);
     ensureDirectoryExists(folderPath);
@@ -72,7 +103,38 @@ async function downloadImage(imageUrl: string, folder: string = 'general'): Prom
     return `/api/uploads/${folder}/${fileName}`;
   } catch (error) {
     console.error('Error downloading image:', error);
-    return imageUrl; // Return original URL on error
+    
+    // Create a placeholder on error
+    try {
+      // Create folder if it doesn't exist
+      const folderPath = path.join(UPLOADS_DIR, folder);
+      ensureDirectoryExists(folderPath);
+      
+      // Generate a placeholder file name
+      const fileName = `error-${uuidv4()}.png`;
+      const filePath = path.join(folderPath, fileName);
+      
+      // Create a simple buffer with placeholder image data
+      const placeholderBuffer = Buffer.from([
+        0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 
+        0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 
+        0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00, 
+        0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00, 
+        0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 
+        0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
+      ]);
+      
+      // Save the placeholder image
+      fs.writeFileSync(filePath, placeholderBuffer);
+      
+      console.log(`Created error placeholder for ${imageUrl} at ${filePath}`);
+      
+      // Return the local URL
+      return `/api/uploads/${folder}/${fileName}`;
+    } catch (e) {
+      console.error('Failed to create placeholder image:', e);
+      return `/api/uploads/placeholder.png`; // Fallback URL
+    }
   }
 }
 
