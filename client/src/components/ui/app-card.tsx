@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { FaGithub, FaGooglePlay } from "react-icons/fa";
 import { App } from "@shared/schema";
+import { handleImageError, getImageUrl } from "@/utils/image-utils";
 
 interface AppCardProps {
   app: App;
@@ -15,9 +16,10 @@ export default function AppCard({ app }: AppCardProps) {
   return (
     <div className="app-card bg-white dark:bg-dark-surface rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-xl transition-all duration-300">
       <img 
-        src={displayImage} 
+        src={getImageUrl(displayImage)} 
         alt={`${title} App`} 
         className="w-full h-48 object-cover"
+        onError={handleImageError}
       />
 
       <div className="p-6">

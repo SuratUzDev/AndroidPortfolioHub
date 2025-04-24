@@ -298,7 +298,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (fs.existsSync(filePath)) {
       res.sendFile(filePath);
     } else {
-      res.status(404).json({ error: 'File not found' });
+      // If file doesn't exist, serve the placeholder image
+      const placeholderPath = path.join(uploadsDir, 'placeholder.png');
+      if (fs.existsSync(placeholderPath)) {
+        res.sendFile(placeholderPath);
+      } else {
+        res.status(404).json({ error: 'File not found and no placeholder available' });
+      }
+    }
+  });
+  
+  // Direct fallback for placeholders
+  app.get('/api/uploads/placeholder.png', (req, res) => {
+    const placeholderPath = path.join(uploadsDir, 'placeholder.png');
+    if (fs.existsSync(placeholderPath)) {
+      res.sendFile(placeholderPath);
+    } else {
+      res.status(404).json({ error: 'Placeholder not found' });
     }
   });
 

@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { BlogPost } from "@shared/schema";
 import { formatDate } from "@/utils/date-utils";
 import { AuthorDisplay } from "@/components/ui/author-display";
+import { handleImageError, getImageUrl } from "@/utils/image-utils";
 
 interface BlogCardProps {
   post: BlogPost;
@@ -16,9 +17,10 @@ export default function BlogCard({ post }: BlogCardProps) {
   return (
     <article className="bg-white dark:bg-dark-surface rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-xl transition-all duration-300">
       <img 
-        src={coverImageUrl} 
+        src={getImageUrl(coverImageUrl)} 
         alt={title} 
         className="w-full h-48 object-cover"
+        onError={handleImageError}
       />
 
       <div className="p-6">
