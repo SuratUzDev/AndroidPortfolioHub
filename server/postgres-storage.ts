@@ -7,7 +7,8 @@ import {
   blogPosts, BlogPost, InsertBlogPost,
   contactMessages, ContactMessage, InsertContactMessage,
   codeSamples, CodeSample, InsertCodeSample,
-  profiles, Profile, InsertProfile
+  profiles, Profile, InsertProfile,
+  comments, Comment, InsertComment
 } from "@shared/schema";
 import { IStorage } from "./storage";
 

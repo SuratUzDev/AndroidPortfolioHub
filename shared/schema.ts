@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, foreignKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -171,3 +171,34 @@ export type Profile = {
 
 export type InsertCodeSample = z.infer<typeof insertCodeSampleSchema>;
 export type CodeSample = typeof codeSamples.$inferSelect;
+
+// Blog Comments schema
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  blogPostId: integer("blog_post_id").notNull().references(() => blogPosts.id),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  // Optional parent comment ID for comment replies
+  parentId: integer("parent_id").references(() => comments.id),
+  isApproved: boolean("is_approved").default(false),
+});
+
+export const insertCommentSchema = createInsertSchema(comments).omit({
+  id: true,
+  createdAt: true,
+  isApproved: true,
+});
+
+// Extend schema with validation for the comment form
+export const commentFormSchema = insertCommentSchema.extend({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  content: z.string().min(5, "Comment must be at least 5 characters"),
+  blogPostId: z.number().int().positive(),
+  parentId: z.number().int().positive().optional(),
+});
+
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type Comment = typeof comments.$inferSelect;

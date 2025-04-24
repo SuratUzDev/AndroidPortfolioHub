@@ -4,7 +4,8 @@ import {
   githubRepos, GithubRepo, InsertGithubRepo,
   blogPosts, BlogPost, InsertBlogPost,
   contactMessages, ContactMessage, InsertContactMessage,
-  codeSamples, CodeSample, InsertCodeSample
+  codeSamples, CodeSample, InsertCodeSample,
+  comments, Comment, InsertComment
 } from "@shared/schema";
 
 // Interface for all storage operations
@@ -39,6 +40,13 @@ export interface IStorage {
   getAllCodeSamples(): Promise<CodeSample[]>;
   getCodeSample(id: number): Promise<CodeSample | undefined>;
   createCodeSample(sample: InsertCodeSample): Promise<CodeSample>;
+  
+  // Comment operations
+  getCommentsByBlogPostId(blogPostId: number): Promise<Comment[]>;
+  getComment(id: number): Promise<Comment | undefined>;
+  createComment(comment: InsertComment): Promise<Comment>;
+  approveComment(id: number): Promise<Comment>;
+  deleteComment(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -193,6 +201,29 @@ export class MemStorage implements IStorage {
     const sample: CodeSample = { ...insertSample, id };
     this.codeSamples.set(id, sample);
     return sample;
+  }
+  
+  // Comment operations
+  async getCommentsByBlogPostId(blogPostId: number): Promise<Comment[]> {
+    // In-memory storage doesn't implement comments
+    return [];
+  }
+  
+  async getComment(id: number): Promise<Comment | undefined> {
+    // In-memory storage doesn't implement comments
+    return undefined;
+  }
+  
+  async createComment(comment: InsertComment): Promise<Comment> {
+    throw new Error("Comments are not implemented in the in-memory storage");
+  }
+  
+  async approveComment(id: number): Promise<Comment> {
+    throw new Error("Comments are not implemented in the in-memory storage");
+  }
+  
+  async deleteComment(id: number): Promise<void> {
+    throw new Error("Comments are not implemented in the in-memory storage");
   }
 
   // Initialize with sample data
