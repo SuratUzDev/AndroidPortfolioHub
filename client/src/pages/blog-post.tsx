@@ -9,6 +9,7 @@ import { AuthorDisplay } from "@/components/ui/author-display";
 import { BlogPost } from "@shared/schema";
 import { getBlogPostBySlug } from "@/services/firebaseService";
 import { formatDate } from "@/utils/date-utils";
+import { Comments } from "@/components/comments";
 
 export default function BlogPostPage() {
   const [match, params] = useRoute("/blog/:slug");
@@ -109,6 +110,9 @@ export default function BlogPostPage() {
         <div className="prose dark:prose-invert max-w-none">
           <div dangerouslySetInnerHTML={{ __html: content }} />
         </div>
+        
+        {/* Comments section */}
+        <Comments blogPostId={post.id} />
       </div>
     </>
   );
