@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { contactFormSchema, commentFormSchema, insertAppSchema, insertGithubRepoSchema, insertBlogPostSchema, insertCodeSampleSchema } from "@shared/schema";
@@ -11,6 +11,8 @@ import fs from 'fs';
 import path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve static files from public directory
+  app.use('/public', express.static(path.join(process.cwd(), 'public')));
   // Get all apps for portfolio section
   app.get("/api/apps", async (req, res) => {
     try {
@@ -298,23 +300,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (fs.existsSync(filePath)) {
       res.sendFile(filePath);
     } else {
-      // If file doesn't exist, serve the placeholder image
-      const placeholderPath = path.join(uploadsDir, 'placeholder.png');
-      if (fs.existsSync(placeholderPath)) {
-        res.sendFile(placeholderPath);
+      // If file doesn't exist, try a category-specific placeholder first
+      const categoryPlaceholder = path.join(uploadsDir, folder, 'category-placeholder.png');
+      if (fs.existsSync(categoryPlaceholder)) {
+        res.sendFile(categoryPlaceholder);
       } else {
-        res.status(404).json({ error: 'File not found and no placeholder available' });
+        // Fall back to the main placeholder
+        const betterPlaceholderPath = path.join(uploadsDir, 'better-placeholder.png');
+        if (fs.existsSync(betterPlaceholderPath)) {
+          res.sendFile(betterPlaceholderPath);
+        } else {
+          // Last resort: original placeholder
+          const placeholderPath = path.join(uploadsDir, 'placeholder.png');
+          if (fs.existsSync(placeholderPath)) {
+            res.sendFile(placeholderPath);
+          } else {
+            res.status(404).json({ error: 'File not found and no placeholder available' });
+          }
+        }
       }
     }
   });
   
   // Direct fallback for placeholders
   app.get('/api/uploads/placeholder.png', (req, res) => {
-    const placeholderPath = path.join(uploadsDir, 'placeholder.png');
-    if (fs.existsSync(placeholderPath)) {
-      res.sendFile(placeholderPath);
+    // Try better placeholder first
+    const betterPlaceholderPath = path.join(uploadsDir, 'better-placeholder.png');
+    if (fs.existsSync(betterPlaceholderPath)) {
+      res.sendFile(betterPlaceholderPath);
     } else {
-      res.status(404).json({ error: 'Placeholder not found' });
+      // Fall back to original
+      const placeholderPath = path.join(uploadsDir, 'placeholder.png');
+      if (fs.existsSync(placeholderPath)) {
+        res.sendFile(placeholderPath);
+      } else {
+        res.status(404).json({ error: 'Placeholder not found' });
+      }
     }
   });
 
