@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
  * @param folder The folder within uploads directory to save the image (apps, blog, profile, etc.)
  * @returns URL to the locally saved image
  */
-export async function downloadAndSaveImage(imageUrl: string, folder: string = 'general'): Promise<string> {
+export async function downloadAndSaveImage(imageUrl: string | null | undefined, folder: string = 'general'): Promise<string> {
   try {
     if (!imageUrl) return '';
     
@@ -36,7 +36,7 @@ export async function downloadAndSaveImage(imageUrl: string, folder: string = 'g
   } catch (error) {
     console.error('Error downloading image:', error);
     // Return original URL as fallback
-    return imageUrl;
+    return imageUrl || '';
   }
 }
 

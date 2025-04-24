@@ -1,6 +1,6 @@
 // No longer using Firebase for data storage
 import { apiRequest } from "@/lib/queryClient";
-import { App, BlogPost, GithubRepo, CodeSample } from "@shared/schema";
+import { App, BlogPost, GithubRepo, CodeSample, Profile } from "@shared/schema";
 import { downloadAndSaveImage, downloadMultipleImages } from "./imageDownloader";
 
 // Sample Apps
@@ -287,6 +287,59 @@ Key takeaways:
   }
 ];
 
+// Sample Profile
+const sampleProfile: Profile = {
+  id: "1",
+  name: "Sulton UzDev",
+  title: "Android Developer & Kotlin Enthusiast",
+  bio: "Experienced Android developer with 5+ years building modern, scalable mobile applications using Kotlin, Jetpack Compose, and modern architecture patterns.",
+  email: "contact@sultonuzdev.com",
+  phone: "+1 (123) 456-7890",
+  location: "Tashkent, Uzbekistan",
+  avatarUrl: "https://randomuser.me/api/portraits/men/36.jpg",
+  experience: [
+    {
+      company: "Innovative Mobile Solutions",
+      position: "Senior Android Developer",
+      startDate: new Date(2020, 1, 1),
+      description: "Leading development of enterprise Android applications using Kotlin, Jetpack Compose, and Clean Architecture."
+    },
+    {
+      company: "Mobile App Studio",
+      position: "Android Developer",
+      startDate: new Date(2018, 3, 15),
+      endDate: new Date(2020, 1, 1),
+      description: "Developed consumer-facing Android applications with Kotlin, MVVM architecture, and Material Design principles."
+    }
+  ],
+  education: [
+    {
+      school: "University of Technology",
+      degree: "Bachelor's Degree",
+      field: "Computer Science",
+      graduationDate: new Date(2018, 5, 1)
+    }
+  ],
+  skills: [
+    "Kotlin", "Java", "Android SDK", "Jetpack Compose", "MVVM", 
+    "Clean Architecture", "Coroutines", "Flow", "Retrofit", "Room"
+  ],
+  socialLinks: [
+    {
+      platform: "GitHub",
+      url: "https://github.com/sultonuzdev"
+    },
+    {
+      platform: "LinkedIn",
+      url: "https://linkedin.com/in/sultonuzdev"
+    },
+    {
+      platform: "Twitter",
+      url: "https://twitter.com/sultonuzdev"
+    }
+  ]
+};
+
 // Sample Code Samples
 const sampleCodeSamples: Omit<CodeSample, "id">[] = [
   {
@@ -382,6 +435,7 @@ export async function seedDatabase() {
     const reposEmpty = await isCollectionEmpty("githubRepos");
     const postsEmpty = await isCollectionEmpty("blogPosts");
     const samplesEmpty = await isCollectionEmpty("codeSamples");
+    const profileEmpty = await isCollectionEmpty("profile");
     
     // Only add sample data if the collections are empty
     if (appsEmpty) {
@@ -389,7 +443,7 @@ export async function seedDatabase() {
         try {
           // Download and save images locally
           const localIconUrl = await downloadAndSaveImage(app.iconUrl, 'apps');
-          const localScreenshotUrls = await downloadMultipleImages(app.screenshotUrls, 'apps');
+          const localScreenshotUrls = await downloadMultipleImages(app.screenshotUrls || [], 'apps');
           
           // Create app with local image URLs
           await apiRequest('/api/apps', {
@@ -446,6 +500,25 @@ export async function seedDatabase() {
         });
       }
       console.log("Sample code samples added to database");
+    }
+    
+    if (profileEmpty) {
+      try {
+        // Download and save the profile avatar
+        const localAvatarUrl = await downloadAndSaveImage(sampleProfile.avatarUrl, 'profile');
+        
+        // Create profile with local avatar URL
+        await apiRequest('/api/profile', {
+          method: 'POST',
+          body: JSON.stringify({
+            ...sampleProfile,
+            avatarUrl: localAvatarUrl
+          }),
+        });
+        console.log("Sample profile added to database");
+      } catch (profileError) {
+        console.error("Error adding profile:", profileError);
+      }
     }
     
     return {
