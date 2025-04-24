@@ -2,12 +2,12 @@
  * Utility functions for handling images
  */
 
-// Placeholder image paths
+// Placeholder image paths - using SVG for better reliability
 const PLACEHOLDER_URLS = {
   default: '/api/uploads/better-placeholder.png',
-  apps: '/api/uploads/apps/category-placeholder.png',
-  blog: '/api/uploads/blog/category-placeholder.png',
-  profile: '/api/uploads/profile/category-placeholder.png'
+  apps: '/api/uploads/apps/category-placeholder.svg',
+  blog: '/api/uploads/blog/category-placeholder.svg',
+  profile: '/api/uploads/profile/category-placeholder.svg'
 };
 
 /**
@@ -38,7 +38,7 @@ export function handleImageError(
 /**
  * Safely adds image loading error handling to an image URL
  * If the URL is already in the local uploads folder, returns it as is
- * If it's an external URL, keeps it but prepares for fallback on error
+ * If it's an external URL, returns the placeholder directly to ensure images are visible
  */
 export function getImageUrl(url: string | null | undefined, category?: 'apps' | 'blog' | 'profile'): string {
   // If no URL is provided, return appropriate placeholder
@@ -46,11 +46,12 @@ export function getImageUrl(url: string | null | undefined, category?: 'apps' | 
     return category ? PLACEHOLDER_URLS[category] : PLACEHOLDER_URLS.default;
   }
   
-  // If it's already a local URL, return it as is
-  if (url.startsWith('/api/uploads/') || url.startsWith('/public/uploads/')) {
+  // If it's already a local URL and not a placeholder, return it as is
+  if ((url.startsWith('/api/uploads/') || url.startsWith('/public/uploads/')) 
+       && !url.includes('placeholder')) {
     return url;
   }
   
-  // Return the original URL - onError handler will set the placeholder if it fails
-  return url;
+  // FORCE PLACEHOLDERS - don't even try to load potentially broken images
+  return category ? PLACEHOLDER_URLS[category] : PLACEHOLDER_URLS.default;
 }

@@ -301,14 +301,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
       res.sendFile(filePath);
     } else {
-      // If file doesn't exist, try a category-specific placeholder first
-      const categoryPlaceholder = path.join(uploadsDir, folder, 'category-placeholder.png');
-      if (fs.existsSync(categoryPlaceholder)) {
-        console.log(`Serving category placeholder for ${folder}/${filename}`);
+      // Check file extension
+      const ext = path.extname(filename).toLowerCase();
+      
+      // If file doesn't exist, try a category-specific placeholder first (SVG or PNG)
+      const svgCategoryPlaceholder = path.join(uploadsDir, folder, 'category-placeholder.svg');
+      const pngCategoryPlaceholder = path.join(uploadsDir, folder, 'category-placeholder.png');
+      
+      if (fs.existsSync(svgCategoryPlaceholder)) {
+        console.log(`Serving SVG category placeholder for ${folder}/${filename}`);
         res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
-        res.sendFile(categoryPlaceholder);
-      } else {
-        // Fall back to the main placeholder
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.sendFile(svgCategoryPlaceholder);
+      } 
+      else if (fs.existsSync(pngCategoryPlaceholder)) {
+        console.log(`Serving PNG category placeholder for ${folder}/${filename}`);
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
+        res.sendFile(pngCategoryPlaceholder);
+      } 
+      else {
+        // Fall back to the better placeholder
         const betterPlaceholderPath = path.join(uploadsDir, 'better-placeholder.png');
         if (fs.existsSync(betterPlaceholderPath)) {
           console.log(`Serving better placeholder for ${folder}/${filename}`);
