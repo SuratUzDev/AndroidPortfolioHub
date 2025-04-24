@@ -6,6 +6,7 @@ import { fromZodError } from "zod-validation-error";
 import { migrateAllData } from "./firebase-to-postgres";
 import { upload, handleFileUpload, handleMultipleFileUpload } from "./upload";
 import { downloadImage } from "./imageDownloader";
+import { handleImageMigration } from "./image-migration";
 import fs from 'fs';
 import path from 'path';
 
@@ -310,6 +311,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Image download endpoint
   app.post("/api/uploads/download", downloadImage);
+  
+  // Image migration endpoint (for admin use)
+  app.post("/api/admin/migrate-images", handleImageMigration);
 
   const httpServer = createServer(app);
   return httpServer;

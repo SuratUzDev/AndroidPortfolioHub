@@ -24,7 +24,12 @@ import { seedDatabase } from "@/utils/simplified-sample-data";
 
 export default function AdminDashboard() {
   const [isSeeding, setIsSeeding] = useState(false);
+  const [isMigratingImages, setIsMigratingImages] = useState(false);
   const [seedResult, setSeedResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+  const [migrationResult, setMigrationResult] = useState<{
     success: boolean;
     message: string;
   } | null>(null);
@@ -97,6 +102,61 @@ export default function AdminDashboard() {
       });
     } finally {
       setIsSeeding(false);
+    }
+  };
+  
+  // Handle migrating external images to local storage
+  const handleMigrateImages = async () => {
+    setIsMigratingImages(true);
+    setMigrationResult(null);
+    
+    try {
+      // Call the image migration endpoint
+      const result = await apiRequest('/api/admin/migrate-images', {
+        method: 'POST'
+      });
+      
+      setMigrationResult({
+        success: result.success,
+        message: result.message
+      });
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Images migrated to local storage successfully!",
+        });
+        
+        // Refetch data to update the UI with new image paths
+        await Promise.all([
+          refetchApps(),
+          refetchRepos(),
+          refetchBlogPosts(),
+          refetchCodeSamples()
+        ]);
+        
+        // Invalidate all queries to refresh data
+        queryClient.invalidateQueries();
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to migrate images",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setMigrationResult({
+        success: false,
+        message: (error as Error).message || "An unknown error occurred"
+      });
+      
+      toast({
+        title: "Error",
+        description: "Failed to migrate images. See console for details.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMigratingImages(false);
     }
   };
 
@@ -312,10 +372,12 @@ export default function AdminDashboard() {
         </Card>
       </div>
       
-      {/* Sample Data Generator */}
+      {/* Database Management Section */}
       <div className="mt-10">
         <h2 className="text-xl font-bold mb-6">Database Management</h2>
-        <Card>
+        
+        {/* Sample Data Card */}
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Database className="mr-2 h-5 w-5" />
@@ -342,6 +404,46 @@ export default function AdminDashboard() {
               >
                 <Database className="h-4 w-4" />
                 {isSeeding ? "Adding Sample Data..." : "Add Sample Data"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Image Migration Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <img src="/icons/image-migration.svg" alt="Migration" className="mr-2 h-5 w-5" onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGNpcmNsZSBjeD0iOC41IiBjeT0iOC41IiByPSIxLjUiPjwvY2lyY2xlPjxwb2x5bGluZSBwb2ludHM9IjIxIDEzLjg1IDE2IDEwLjUgOCAxNy41Ij48L3BvbHlsaW5lPjwvc3ZnPg==";
+              }} />
+              Migrate External Images
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              This tool downloads images from external URLs and stores them locally on the server. This is useful when migrating from another platform or when the external image hosts might become unavailable.
+            </p>
+            
+            {migrationResult && (
+              <Alert variant={migrationResult.success ? "default" : "destructive"}>
+                <AlertTitle>{migrationResult.success ? "Success" : "Error"}</AlertTitle>
+                <AlertDescription>{migrationResult.message}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleMigrateImages}
+                disabled={isMigratingImages}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <img src="/icons/image-download.svg" alt="Download" className="h-4 w-4" onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMSAxNXY0YTIgMiAwIDAgMS0yIDJINWEyIDIgMCAwIDEtMi0ydi00Ij48L3BhdGg+PHBvbHlsaW5lIHBvaW50cz0iNyAxMCAxMiAxNSAxNyAxMCI+PC9wb2x5bGluZT48bGluZSB4MT0iMTIiIHkxPSIxNSIgeDI9IjEyIiB5Mj0iMyI+PC9saW5lPjwvc3ZnPg==";
+                }} />
+                {isMigratingImages ? "Migrating Images..." : "Migrate Images to Local Storage"}
               </Button>
             </div>
           </CardContent>
