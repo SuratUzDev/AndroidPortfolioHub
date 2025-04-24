@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { getProfile } from "@/services/firebaseService";
 import { formatDate } from "@/utils/date-utils";
+import { handleImageError, getImageUrl } from "@/utils/image-utils";
 
 interface AuthorDisplayProps {
   publishDate?: string;

@@ -17,10 +17,10 @@ export default function BlogCard({ post }: BlogCardProps) {
   return (
     <article className="bg-white dark:bg-dark-surface rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-xl transition-all duration-300">
       <img 
-        src={getImageUrl(coverImageUrl)} 
+        src={getImageUrl(coverImageUrl, 'blog')} 
         alt={title} 
         className="w-full h-48 object-cover"
-        onError={handleImageError}
+        onError={(e) => handleImageError(e, 'blog')}
       />
 
       <div className="p-6">

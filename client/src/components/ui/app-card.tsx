@@ -16,10 +16,10 @@ export default function AppCard({ app }: AppCardProps) {
   return (
     <div className="app-card bg-white dark:bg-dark-surface rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-xl transition-all duration-300">
       <img 
-        src={getImageUrl(displayImage)} 
+        src={getImageUrl(displayImage, 'apps')} 
         alt={`${title} App`} 
         className="w-full h-48 object-cover"
-        onError={handleImageError}
+        onError={(e) => handleImageError(e, 'apps')}
       />
 
       <div className="p-6">
