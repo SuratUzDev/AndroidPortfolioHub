@@ -1,5 +1,5 @@
-import { db } from "@/lib/firebase";
-import { collection, doc, setDoc, getDocs, query, limit } from "firebase/firestore";
+// No longer using Firebase for data storage
+import { apiRequest } from "@/lib/queryClient";
 import { App, BlogPost, GithubRepo, CodeSample } from "@shared/schema";
 
 // Sample Apps
@@ -358,13 +358,22 @@ fun GreetingCard(name: String) {
 ];
 
 // Function to check if a collection is empty
+// Function to check if a collection is empty (using REST API instead of Firebase)
 async function isCollectionEmpty(collectionName: string): Promise<boolean> {
-  const collectionRef = collection(db, collectionName);
-  const snapshot = await getDocs(query(collectionRef, limit(1)));
-  return snapshot.empty;
+  try {
+    const response = await fetch(`/api/${collectionName.toLowerCase()}`);
+    if (!response.ok) {
+      return true; // Assume empty if error
+    }
+    const data = await response.json();
+    return !data || (Array.isArray(data) && data.length === 0);
+  } catch (error) {
+    console.error(`Error checking if ${collectionName} is empty:`, error);
+    return true; // Assume empty if error
+  }
 }
 
-// Function to seed the database with sample data
+// Function to seed the database with sample data using API calls
 export async function seedDatabase() {
   try {
     // Check if collections are already populated
@@ -375,33 +384,41 @@ export async function seedDatabase() {
     
     // Only add sample data if the collections are empty
     if (appsEmpty) {
-      const appsCollection = collection(db, "apps");
       for (const app of sampleApps) {
-        await setDoc(doc(appsCollection), app);
+        await apiRequest('/api/apps', {
+          method: 'POST',
+          body: JSON.stringify(app),
+        });
       }
       console.log("Sample apps added to database");
     }
     
     if (reposEmpty) {
-      const reposCollection = collection(db, "githubRepos");
       for (const repo of sampleGithubRepos) {
-        await setDoc(doc(reposCollection), repo);
+        await apiRequest('/api/github-repos', {
+          method: 'POST',
+          body: JSON.stringify(repo),
+        });
       }
       console.log("Sample GitHub repos added to database");
     }
     
     if (postsEmpty) {
-      const postsCollection = collection(db, "blogPosts");
       for (const post of sampleBlogPosts) {
-        await setDoc(doc(postsCollection), post);
+        await apiRequest('/api/blog-posts', {
+          method: 'POST',
+          body: JSON.stringify(post),
+        });
       }
       console.log("Sample blog posts added to database");
     }
     
     if (samplesEmpty) {
-      const samplesCollection = collection(db, "codeSamples");
       for (const sample of sampleCodeSamples) {
-        await setDoc(doc(samplesCollection), sample);
+        await apiRequest('/api/code-samples', {
+          method: 'POST',
+          body: JSON.stringify(sample),
+        });
       }
       console.log("Sample code samples added to database");
     }
@@ -414,7 +431,7 @@ export async function seedDatabase() {
     console.error("Error seeding database:", error);
     return {
       success: false,
-      message: "Error seeding database: " + (error as Error).message
+      message: "Error seeding database: " + (error instanceof Error ? error.message : String(error))
     };
   }
 }
