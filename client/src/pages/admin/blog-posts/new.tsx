@@ -72,7 +72,7 @@ export default function NewBlogPost() {
       author: "Admin",
       isFeatured: false,
       coverImageUrl: "",
-      publishedAt: new Date().toISOString(),
+      publishedAt: new Date().toISOString().split("T")[0],
       tags: "",
       slug: "",
     },

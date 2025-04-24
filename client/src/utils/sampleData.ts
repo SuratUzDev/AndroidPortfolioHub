@@ -677,16 +677,17 @@ fun getStockUpdates(): Flow<StockUpdate> = flow {
 // Collecting a flow
 lifecycleScope.launch {
     getStockUpdates()
-        .filter { it.changePercent > 5 }
-        .map { stockUpdate -> 
-            stockUpdate.copy(
-                description = "↑ ${stockUpdate.changePercent}% from yesterday"
-            )
-        }
-        .catch { e -> handleError(e) }
-        .collect { stockUpdate ->
-            updateStockUI(stockUpdate)
-        }
+        .filter(item => item.changePercent > 5)
+        .map(item => {
+            return {
+                ...item,
+                description: `↑ ${item.changePercent}% from yesterday`
+            };
+        })
+        .catch(e => handleError(e))
+        .collect(item => {
+            updateStockUI(item);
+        })
 }
 \`\`\`
 

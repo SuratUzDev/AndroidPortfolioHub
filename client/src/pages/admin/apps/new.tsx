@@ -229,7 +229,11 @@ export default function NewApp() {
                     <FormControl>
                       <Input
                         placeholder="https://play.google.com/store/apps/details?id=com.example.app"
-                        {...field}
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                       />
                     </FormControl>
                     <FormDescription>
@@ -286,8 +290,8 @@ export default function NewApp() {
                       </div>
                       <FormControl>
                         <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                          checked={field.value === true}
+                          onCheckedChange={(checked) => field.onChange(checked)}
                         />
                       </FormControl>
                     </FormItem>

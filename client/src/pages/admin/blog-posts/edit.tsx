@@ -71,7 +71,7 @@ export default function EditBlogPostPage() {
         excerpt: post.excerpt,
         content: post.content,
         coverImageUrl: post.coverImageUrl || "",
-        publishedAt: new Date(post.publishedAt).toISOString().split('T')[0],
+        publishedAt: post.publishedAt ? (new Date(post.publishedAt).toString() !== "Invalid Date" ? new Date(post.publishedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
         author: post.author,
         isFeatured: post.isFeatured || false,
         tagsString: post.tags ? post.tags.join(", ") : "",
