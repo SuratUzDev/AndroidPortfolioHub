@@ -4,10 +4,10 @@
 
 // Placeholder image paths
 const PLACEHOLDER_URLS = {
-  default: '/public/uploads/better-placeholder.png',
-  apps: '/public/uploads/apps/category-placeholder.png',
-  blog: '/public/uploads/blog/category-placeholder.png',
-  profile: '/public/uploads/profile/category-placeholder.png'
+  default: '/api/uploads/better-placeholder.png',
+  apps: '/api/uploads/apps/category-placeholder.png',
+  blog: '/api/uploads/blog/category-placeholder.png',
+  profile: '/api/uploads/profile/category-placeholder.png'
 };
 
 /**
