@@ -2,16 +2,34 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
+import * as dotenv from 'dotenv';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Load environment variables from .env file
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    // ESM-compatible path resolution
+    const currentModuleUrl = import.meta.url;
+    const currentFilePath = fileURLToPath(currentModuleUrl);
+    const currentDirPath = dirname(currentFilePath);
+    const rootDir = join(currentDirPath, '..');
+    dotenv.config({ path: join(rootDir, '.env') });
+  } catch (error) {
+    console.warn('Error loading .env file:', error);
+  }
+}
 
 neonConfig.webSocketConstructor = ws;
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+// Use a default connection string for local development if DATABASE_URL is not set
+const connectionString = process.env.DATABASE_URL || 
+  'postgres://localhost:5432/android_portfolio_hub';
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+console.log(`Connecting to database with ${process.env.DATABASE_URL ? 'provided URL' : 'default local URL'}`);
+
+export const pool = new Pool({ connectionString });
 export const db = drizzle(pool, { schema });
 
 // Helper function to convert database types to API response types
