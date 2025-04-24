@@ -1,16 +1,49 @@
-import {
-  Timestamp,
-  DocumentData,
-  Firestore
-} from "firebase/firestore";
+/**
+ * This is a migration utility file that is no longer used in production.
+ * It contains mock implementations for Firebase functions that were previously
+ * used to migrate data from Firebase to PostgreSQL.
+ * 
+ * NOTE: This file isn't used in the actual application flow anymore.
+ * It's kept for reference and in case we need to run migrations again.
+ */
 
-// Mock Firebase Firestore functionality since we're not using it anymore
-// This is just to prevent errors when the migration functions are called
-export function collection() { return { docs: [] }; }
-export function doc() { return { exists: () => false, data: () => ({}) }; }
-export function getDoc() { return Promise.resolve({ exists: () => false, data: () => ({}) }); }
-export function getDocs() { return Promise.resolve({ docs: [] }); }
+// Simply use any type to avoid TypeScript errors
+// Since this code is no longer being used in production
+export type Firestore = any;
+export type DocumentReference = any;
+export type DocumentSnapshot = any;
+export type CollectionReference = any;
+export type QuerySnapshot = any;
+export type Timestamp = any;
 
+// Mock Firebase Firestore functionality
+export function collection(): any { 
+  return { 
+    docs: []
+  }; 
+}
+
+export function doc(): any { 
+  return { 
+    exists: () => false, 
+    data: () => ({}) 
+  }; 
+}
+
+export function getDoc(): Promise<any> { 
+  return Promise.resolve({ 
+    exists: () => false, 
+    data: () => ({}) 
+  }); 
+}
+
+export function getDocs(): Promise<any> { 
+  return Promise.resolve({ 
+    docs: [] 
+  }); 
+}
+
+// We no longer use Firebase database
 const firebaseDb = null;
 import { db as postgresDb } from "./db";
 import {
