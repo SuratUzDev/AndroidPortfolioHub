@@ -1,55 +1,33 @@
-import { db, storage } from "@/lib/firebase";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  Timestamp,
-  DocumentData,
-} from "firebase/firestore";
-import {
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-} from "firebase/storage";
+/**
+ * This service originally used Firebase Firestore and Storage.
+ * It has been refactored to use our PostgreSQL backend API instead.
+ * We keep the same interface so components don't need to be changed.
+ */
+import { auth } from "@/lib/firebase"; // Keep Firebase Auth only
 import { App, BlogPost, GithubRepo, CodeSample, Profile } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { uploadFile as uploadFileToServer, uploadMultipleFiles } from "@/services/uploadService";
 
-// Collection names
-const APPS_COLLECTION = "apps";
-const BLOG_POSTS_COLLECTION = "blogPosts";
-const GITHUB_REPOS_COLLECTION = "githubRepos";
-const CODE_SAMPLES_COLLECTION = "codeSamples";
-const PROFILE_COLLECTION = "profile";
-
-// Helper function to convert Firestore data to our types
-const convertFirestoreData = <T>(
-  doc: DocumentData
-): T => {
-  const data = doc.data();
-  // Convert Firestore timestamps to JS Date objects
-  const convertedData: any = { ...data, id: doc.id };
+// Helper function to process date fields in responses
+const processDateFields = (data: any): any => {
+  if (!data) return data;
   
-  if (data.publishedAt && data.publishedAt instanceof Timestamp) {
-    convertedData.publishedAt = data.publishedAt.toDate();
-  }
-  if (data.createdAt && data.createdAt instanceof Timestamp) {
-    convertedData.createdAt = data.createdAt.toDate();
-  }
-  if (data.updatedAt && data.updatedAt instanceof Timestamp) {
-    convertedData.updatedAt = data.updatedAt.toDate();
+  if (data.publishedAt && typeof data.publishedAt === 'string') {
+    data.publishedAt = new Date(data.publishedAt);
   }
   
-  return convertedData as T;
+  if (data.createdAt && typeof data.createdAt === 'string') {
+    data.createdAt = new Date(data.createdAt);
+  }
+  
+  if (data.updatedAt && typeof data.updatedAt === 'string') {
+    data.updatedAt = new Date(data.updatedAt);
+  }
+  
+  return data;
 };
 
-// Upload a file to Firebase Storage
+// Upload a file using our new server upload service
 export const uploadFile = async (file: File, path: string): Promise<string> => {
   console.log(`Starting upload for file: ${file.name} to path: ${path}`);
   
@@ -59,306 +37,268 @@ export const uploadFile = async (file: File, path: string): Promise<string> => {
   }
   
   try {
-    const storageRef = ref(storage, path);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    // Extract the category from the path
+    const pathParts = path.split('/');
+    const category = pathParts[0] || 'general';
     
-    return new Promise((resolve, reject) => {
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          // Track progress if needed
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log(`Upload is ${progress.toFixed(2)}% done`);
-        },
-        (error) => {
-          // Handle unsuccessful uploads
-          console.error("Upload failed:", error);
-          reject(error);
-        },
-        async () => {
-          try {
-            // Handle successful uploads
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            console.log(`Upload successful. Download URL: ${downloadURL}`);
-            resolve(downloadURL);
-          } catch (err) {
-            console.error("Failed to get download URL:", err);
-            reject(err);
-          }
-        }
-      );
-    });
+    // Use the uploadService to upload the file to our server
+    const downloadURL = await uploadFileToServer(file, category);
+    console.log(`Upload successful. Download URL: ${downloadURL}`);
+    return downloadURL;
   } catch (error) {
     console.error("Error starting upload:", error);
     return Promise.reject(error);
   }
 };
 
-// Delete a file from Firebase Storage
+// Delete a file
 export const deleteFile = async (path: string): Promise<void> => {
-  const storageRef = ref(storage, path);
-  return deleteObject(storageRef);
+  try {
+    // Call the API to delete a file
+    await apiRequest(`/api/upload/delete`, {
+      method: 'DELETE',
+      body: JSON.stringify({ path }),
+    });
+    
+    console.log(`File deleted: ${path}`);
+    return;
+  } catch (error) {
+    console.error(`Error deleting file: ${path}`, error);
+    throw error;
+  }
 };
 
 // App services
 export const getApps = async (): Promise<App[]> => {
-  const appsCollection = collection(db, APPS_COLLECTION);
-  const appsSnapshot = await getDocs(appsCollection);
-  return appsSnapshot.docs.map((doc) => convertFirestoreData<App>(doc));
+  const apps = await apiRequest<App[]>('/api/apps');
+  return apps.map(app => processDateFields(app));
 };
 
-export const getApp = async (id: string): Promise<App | null> => {
-  const appDoc = doc(db, APPS_COLLECTION, id);
-  const appSnapshot = await getDoc(appDoc);
-  
-  if (!appSnapshot.exists()) {
-    return null;
+export const getApp = async (id: string | number): Promise<App | null> => {
+  try {
+    const app = await apiRequest<App>(`/api/apps/${id}`);
+    return processDateFields(app);
+  } catch (error) {
+    if (error instanceof Response && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
-  
-  return convertFirestoreData<App>(appSnapshot);
 };
 
 export const createApp = async (app: Omit<App, "id">): Promise<App> => {
-  const appsCollection = collection(db, APPS_COLLECTION);
-  const newAppRef = doc(appsCollection);
-  await setDoc(newAppRef, app);
+  const newApp = await apiRequest<App>('/api/apps', {
+    method: 'POST',
+    body: JSON.stringify(app),
+  });
   
-  const newAppSnapshot = await getDoc(newAppRef);
-  return convertFirestoreData<App>(newAppSnapshot);
+  return processDateFields(newApp);
 };
 
-export const updateApp = async (id: string, app: Partial<App>): Promise<void> => {
-  const appDoc = doc(db, APPS_COLLECTION, id);
-  return updateDoc(appDoc, app);
+export const updateApp = async (id: string | number, app: Partial<App>): Promise<void> => {
+  await apiRequest(`/api/apps/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(app),
+  });
 };
 
-export const deleteApp = async (id: string): Promise<void> => {
-  const appDoc = doc(db, APPS_COLLECTION, id);
-  return deleteDoc(appDoc);
+export const deleteApp = async (id: string | number): Promise<void> => {
+  await apiRequest(`/api/apps/${id}`, {
+    method: 'DELETE',
+  });
 };
 
 // Blog post services
 export const getBlogPosts = async (): Promise<BlogPost[]> => {
-  const blogCollection = collection(db, BLOG_POSTS_COLLECTION);
-  const blogQuery = query(blogCollection, orderBy("publishedAt", "desc"));
-  const blogSnapshot = await getDocs(blogQuery);
-  return blogSnapshot.docs.map((doc) => convertFirestoreData<BlogPost>(doc));
+  const posts = await apiRequest<BlogPost[]>('/api/blog-posts');
+  return posts.map(post => processDateFields(post));
 };
 
-export const getBlogPost = async (id: string): Promise<BlogPost | null> => {
-  const blogDoc = doc(db, BLOG_POSTS_COLLECTION, id);
-  const blogSnapshot = await getDoc(blogDoc);
-  
-  if (!blogSnapshot.exists()) {
-    return null;
+export const getBlogPost = async (id: string | number): Promise<BlogPost | null> => {
+  try {
+    const post = await apiRequest<BlogPost>(`/api/blog-posts/${id}`);
+    return processDateFields(post);
+  } catch (error) {
+    if (error instanceof Response && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
-  
-  return convertFirestoreData<BlogPost>(blogSnapshot);
 };
 
 export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
-  const blogCollection = collection(db, BLOG_POSTS_COLLECTION);
-  const blogQuery = query(blogCollection, where("slug", "==", slug));
-  const blogSnapshot = await getDocs(blogQuery);
-  
-  if (blogSnapshot.empty) {
-    return null;
+  try {
+    const post = await apiRequest<BlogPost>(`/api/blog-posts/by-slug/${slug}`);
+    return processDateFields(post);
+  } catch (error) {
+    if (error instanceof Response && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
-  
-  return convertFirestoreData<BlogPost>(blogSnapshot.docs[0]);
 };
 
 export const getFeaturedBlogPost = async (): Promise<BlogPost | null> => {
-  const blogCollection = collection(db, BLOG_POSTS_COLLECTION);
-  const blogQuery = query(blogCollection, where("isFeatured", "==", true));
-  const blogSnapshot = await getDocs(blogQuery);
-  
-  if (blogSnapshot.empty) {
-    return null;
+  try {
+    const post = await apiRequest<BlogPost>('/api/blog-posts/featured');
+    return processDateFields(post);
+  } catch (error) {
+    if (error instanceof Response && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
-  
-  return convertFirestoreData<BlogPost>(blogSnapshot.docs[0]);
 };
 
 export const createBlogPost = async (post: Omit<BlogPost, "id">): Promise<BlogPost> => {
-  const blogCollection = collection(db, BLOG_POSTS_COLLECTION);
-  const newPostRef = doc(blogCollection);
-  await setDoc(newPostRef, post);
+  const newPost = await apiRequest<BlogPost>('/api/blog-posts', {
+    method: 'POST',
+    body: JSON.stringify(post),
+  });
   
-  const newPostSnapshot = await getDoc(newPostRef);
-  return convertFirestoreData<BlogPost>(newPostSnapshot);
+  return processDateFields(newPost);
 };
 
-export const updateBlogPost = async (id: string, post: Partial<BlogPost>): Promise<void> => {
-  const postDoc = doc(db, BLOG_POSTS_COLLECTION, id);
-  return updateDoc(postDoc, post);
+export const updateBlogPost = async (id: string | number, post: Partial<BlogPost>): Promise<void> => {
+  await apiRequest(`/api/blog-posts/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(post),
+  });
 };
 
-export const deleteBlogPost = async (id: string): Promise<void> => {
-  const postDoc = doc(db, BLOG_POSTS_COLLECTION, id);
-  return deleteDoc(postDoc);
+export const deleteBlogPost = async (id: string | number): Promise<void> => {
+  await apiRequest(`/api/blog-posts/${id}`, {
+    method: 'DELETE',
+  });
 };
 
 // GitHub repo services
 export const getGithubRepos = async (): Promise<GithubRepo[]> => {
-  const reposCollection = collection(db, GITHUB_REPOS_COLLECTION);
-  const reposSnapshot = await getDocs(reposCollection);
-  return reposSnapshot.docs.map((doc) => convertFirestoreData<GithubRepo>(doc));
+  const repos = await apiRequest<GithubRepo[]>('/api/github-repos');
+  return repos.map(repo => processDateFields(repo));
 };
 
-export const getGithubRepo = async (id: string): Promise<GithubRepo | null> => {
-  const repoDoc = doc(db, GITHUB_REPOS_COLLECTION, id);
-  const repoSnapshot = await getDoc(repoDoc);
-  
-  if (!repoSnapshot.exists()) {
-    return null;
+export const getGithubRepo = async (id: string | number): Promise<GithubRepo | null> => {
+  try {
+    const repo = await apiRequest<GithubRepo>(`/api/github-repos/${id}`);
+    return processDateFields(repo);
+  } catch (error) {
+    if (error instanceof Response && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
-  
-  return convertFirestoreData<GithubRepo>(repoSnapshot);
 };
 
 export const createGithubRepo = async (repo: Omit<GithubRepo, "id">): Promise<GithubRepo> => {
-  const reposCollection = collection(db, GITHUB_REPOS_COLLECTION);
-  const newRepoRef = doc(reposCollection);
-  await setDoc(newRepoRef, repo);
+  const newRepo = await apiRequest<GithubRepo>('/api/github-repos', {
+    method: 'POST',
+    body: JSON.stringify(repo),
+  });
   
-  const newRepoSnapshot = await getDoc(newRepoRef);
-  return convertFirestoreData<GithubRepo>(newRepoSnapshot);
+  return processDateFields(newRepo);
 };
 
-export const updateGithubRepo = async (id: string, repo: Partial<GithubRepo>): Promise<void> => {
-  const repoDoc = doc(db, GITHUB_REPOS_COLLECTION, id);
-  return updateDoc(repoDoc, repo);
+export const updateGithubRepo = async (id: string | number, repo: Partial<GithubRepo>): Promise<void> => {
+  await apiRequest(`/api/github-repos/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(repo),
+  });
 };
 
-export const deleteGithubRepo = async (id: string): Promise<void> => {
-  const repoDoc = doc(db, GITHUB_REPOS_COLLECTION, id);
-  return deleteDoc(repoDoc);
+export const deleteGithubRepo = async (id: string | number): Promise<void> => {
+  await apiRequest(`/api/github-repos/${id}`, {
+    method: 'DELETE',
+  });
 };
 
 // Code sample services
 export const getCodeSamples = async (): Promise<CodeSample[]> => {
-  const samplesCollection = collection(db, CODE_SAMPLES_COLLECTION);
-  const samplesSnapshot = await getDocs(samplesCollection);
-  return samplesSnapshot.docs.map((doc) => convertFirestoreData<CodeSample>(doc));
+  const samples = await apiRequest<CodeSample[]>('/api/code-samples');
+  return samples.map(sample => processDateFields(sample));
 };
 
-export const getCodeSample = async (id: string): Promise<CodeSample | null> => {
-  const sampleDoc = doc(db, CODE_SAMPLES_COLLECTION, id);
-  const sampleSnapshot = await getDoc(sampleDoc);
-  
-  if (!sampleSnapshot.exists()) {
-    return null;
+export const getCodeSample = async (id: string | number): Promise<CodeSample | null> => {
+  try {
+    const sample = await apiRequest<CodeSample>(`/api/code-samples/${id}`);
+    return processDateFields(sample);
+  } catch (error) {
+    if (error instanceof Response && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
-  
-  return convertFirestoreData<CodeSample>(sampleSnapshot);
 };
 
 export const createCodeSample = async (sample: Omit<CodeSample, "id">): Promise<CodeSample> => {
-  const samplesCollection = collection(db, CODE_SAMPLES_COLLECTION);
-  const newSampleRef = doc(samplesCollection);
-  await setDoc(newSampleRef, sample);
+  const newSample = await apiRequest<CodeSample>('/api/code-samples', {
+    method: 'POST',
+    body: JSON.stringify(sample),
+  });
   
-  const newSampleSnapshot = await getDoc(newSampleRef);
-  return convertFirestoreData<CodeSample>(newSampleSnapshot);
+  return processDateFields(newSample);
 };
 
-export const updateCodeSample = async (id: string, sample: Partial<CodeSample>): Promise<void> => {
-  const sampleDoc = doc(db, CODE_SAMPLES_COLLECTION, id);
-  return updateDoc(sampleDoc, sample);
+export const updateCodeSample = async (id: string | number, sample: Partial<CodeSample>): Promise<void> => {
+  await apiRequest(`/api/code-samples/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(sample),
+  });
 };
 
-export const deleteCodeSample = async (id: string): Promise<void> => {
-  const sampleDoc = doc(db, CODE_SAMPLES_COLLECTION, id);
-  return deleteDoc(sampleDoc);
+export const deleteCodeSample = async (id: string | number): Promise<void> => {
+  await apiRequest(`/api/code-samples/${id}`, {
+    method: 'DELETE',
+  });
 };
 
 // Profile services
 export const getProfile = async (): Promise<Profile | null> => {
-  const profileDoc = doc(db, PROFILE_COLLECTION, "main");
-  const profileSnapshot = await getDoc(profileDoc);
-  
-  if (!profileSnapshot.exists()) {
-    return null;
-  }
-  
-  const profileData = profileSnapshot.data();
-  
-  // Convert Firestore timestamps back to Date objects
-  if (profileData) {
-    // Convert experience dates
-    if (profileData.experience && Array.isArray(profileData.experience)) {
-      profileData.experience = profileData.experience.map(exp => ({
+  try {
+    const profile = await apiRequest<Profile>('/api/profile');
+    
+    // Process date fields in experience and education arrays
+    if (profile.experience && Array.isArray(profile.experience)) {
+      profile.experience = profile.experience.map(exp => ({
         ...exp,
-        startDate: exp.startDate && exp.startDate.toDate ? exp.startDate.toDate() : exp.startDate,
-        endDate: exp.endDate && exp.endDate.toDate ? exp.endDate.toDate() : exp.endDate
+        startDate: exp.startDate ? new Date(exp.startDate) : undefined,
+        endDate: exp.endDate ? new Date(exp.endDate) : undefined
       }));
     }
     
-    // Convert education dates
-    if (profileData.education && Array.isArray(profileData.education)) {
-      profileData.education = profileData.education.map(edu => ({
+    if (profile.education && Array.isArray(profile.education)) {
+      profile.education = profile.education.map(edu => ({
         ...edu,
-        graduationDate: edu.graduationDate && edu.graduationDate.toDate ? edu.graduationDate.toDate() : edu.graduationDate
+        graduationDate: edu.graduationDate ? new Date(edu.graduationDate) : undefined
       }));
     }
+    
+    return profile;
+  } catch (error) {
+    if (error instanceof Response && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
-  
-  return profileData as Profile;
 };
 
 export const updateProfile = async (profile: Profile): Promise<Profile> => {
-  console.log("Updating profile in Firebase:", profile);
-  const profileDoc = doc(db, PROFILE_COLLECTION, "main");
+  console.log("Updating profile:", profile);
   
   // Deep copy the profile to avoid reference issues
   const profileCopy = JSON.parse(JSON.stringify(profile));
   
-  // Define experience type
-  interface Experience {
-    company: string;
-    position: string;
-    startDate: Date | string | null | undefined;
-    endDate?: Date | string | null | undefined;
-    description: string;
-  }
-  
-  // Define education type
-  interface Education {
-    school: string;
-    degree: string;
-    field: string;
-    graduationDate: Date | string | null | undefined;
-  }
-  
-  // Ensure the profile object is clean and all date fields are properly converted
-  // Convert Date objects to Firestore timestamps for proper storage
-  const processedProfile = {
-    ...profileCopy,
-    id: profileCopy.id || "main", // Ensure we have an ID
-    experience: profileCopy.experience.map((exp: Experience) => ({
-      ...exp,
-      startDate: exp.startDate instanceof Date ? Timestamp.fromDate(exp.startDate) : 
-                (exp.startDate ? Timestamp.fromDate(new Date(exp.startDate)) : Timestamp.fromDate(new Date())),
-      endDate: exp.endDate instanceof Date ? Timestamp.fromDate(exp.endDate) : 
-              (exp.endDate ? Timestamp.fromDate(new Date(exp.endDate)) : null)
-    })),
-    education: profileCopy.education.map((edu: Education) => ({
-      ...edu,
-      graduationDate: edu.graduationDate instanceof Date ? Timestamp.fromDate(edu.graduationDate) : 
-                      (edu.graduationDate ? Timestamp.fromDate(new Date(edu.graduationDate)) : Timestamp.fromDate(new Date()))
-    }))
-  };
-  
-  console.log("Processed profile for Firebase:", processedProfile);
-  
   try {
-    // Use setDoc with merge option to update the document
-    await setDoc(profileDoc, processedProfile, { merge: true });
+    // Use our API to update the profile
+    const updatedProfile = await apiRequest<Profile>('/api/profile', {
+      method: 'POST', // The endpoint uses POST for both create and update
+      body: JSON.stringify(profileCopy),
+    });
+    
     console.log("Profile updated successfully!");
     
-    // Return the original profile with any modifications made
-    return Promise.resolve(profile);
+    // Return the updated profile
+    return updatedProfile;
   } catch (error) {
     console.error("Error updating profile:", error);
     return Promise.reject(error);

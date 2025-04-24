@@ -1,13 +1,17 @@
 import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
   Timestamp,
   DocumentData,
   Firestore
 } from "firebase/firestore";
-import { db as firebaseDb } from "../client/src/lib/firebase";
+
+// Mock Firebase Firestore functionality since we're not using it anymore
+// This is just to prevent errors when the migration functions are called
+export function collection() { return { docs: [] }; }
+export function doc() { return { exists: () => false, data: () => ({}) }; }
+export function getDoc() { return Promise.resolve({ exists: () => false, data: () => ({}) }); }
+export function getDocs() { return Promise.resolve({ docs: [] }); }
+
+const firebaseDb = null;
 import { db as postgresDb } from "./db";
 import {
   apps, githubRepos, blogPosts, codeSamples, profiles
@@ -22,7 +26,7 @@ const PROFILE_COLLECTION = "profile";
 
 // Check if Firebase is available
 function isFirebaseAvailable(): boolean {
-  return firebaseDb !== null && firebaseDb !== undefined;
+  return false; // Use PostgreSQL only
 }
 
 // Helper function to convert Firebase timestamp to string dates

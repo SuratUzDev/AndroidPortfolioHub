@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Github } from "lucide-react";
-import * as firebaseService from "@/services/firebaseService";
+import { createGithubRepo } from "@/services/apiService";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { insertGithubRepoSchema } from "@shared/schema";
@@ -40,13 +40,13 @@ export default function NewGithubRepo() {
   });
 
   const createMutation = useMutation({
-    mutationFn: firebaseService.createGithubRepo,
+    mutationFn: createGithubRepo,
     onSuccess: () => {
       toast({
         title: "Success",
         description: "GitHub repository added successfully!",
       });
-      queryClient.invalidateQueries({ queryKey: ["github-repos"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/github-repos'] });
       setLocation("/admin/github-repos");
     },
     onError: (error: any) => {

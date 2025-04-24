@@ -134,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Starting data migration from Firebase to PostgreSQL...");
       
       // Try to import Firebase migration and sample data functions
-      const { isFirebaseAvailable } = await import("../client/src/lib/firebase");
+      const { isFirebaseAuthAvailable: isFirebaseAvailable } = await import("../client/src/lib/firebase");
       const { migrateAllData } = await import("./firebase-to-postgres");
       const { createSampleData } = await import("./mock-migration");
       
