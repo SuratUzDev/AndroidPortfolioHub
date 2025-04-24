@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { getProfile, updateProfile } from "@/services/apiService";
+import { getProfile, updateProfile } from "@/services/firebaseService";
 import { uploadFile } from "@/services/uploadService";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
