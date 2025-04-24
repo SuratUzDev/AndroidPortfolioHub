@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { MessageSquare, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Comment } from "../../../shared/schema";
+import { Comment } from "@shared/schema";
 import CommentForm from "./CommentForm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 

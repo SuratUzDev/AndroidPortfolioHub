@@ -29,8 +29,8 @@ export default function CommentForm({ blogPostId, parentId, onSuccess }: Comment
       name: "",
       email: "",
       content: "",
-      blogPostId,
-      parentId
+      blogPostId: blogPostId,
+      parentId: parentId || null
     },
   });
 
