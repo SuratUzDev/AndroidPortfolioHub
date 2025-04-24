@@ -1068,7 +1068,7 @@ fun ProductCard(product: Product) {
                 )
                 
                 Text(
-                    text = "$${product.price || '9.99'}",
+                    text = "$9.99",
                     style = MaterialTheme.typography.subtitle1,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colors.primary

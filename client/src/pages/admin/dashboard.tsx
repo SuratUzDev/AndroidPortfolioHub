@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { seedDatabase } from "@/utils/simplified-sample-data";
 
 export default function AdminDashboard() {
   const [isSeeding, setIsSeeding] = useState(false);
@@ -46,34 +47,43 @@ export default function AdminDashboard() {
     queryKey: ['/api/code-samples'],
   });
 
-  // Handle seeding the database using PostgreSQL migration endpoint
+  // Handle seeding the database using our seed function from simplified-sample-data.ts
   const handleSeedDatabase = async () => {
     setIsSeeding(true);
     setSeedResult(null);
     
     try {
-      // Call the migration endpoint
-      const result = await apiRequest('/api/admin/migrate', {
-        method: 'POST'
-      });
+      // Call the simplified seed function
+      const result = await seedDatabase();
       
       setSeedResult({
-        success: true,
-        message: result.message || "Sample data added successfully!"
+        success: result.success,
+        message: result.message
       });
       
-      toast({
-        title: "Success",
-        description: "Sample data added to the database successfully!",
-      });
-      
-      // Refetch data to update the UI
-      await Promise.all([
-        refetchApps(),
-        refetchRepos(),
-        refetchBlogPosts(),
-        refetchCodeSamples()
-      ]);
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Sample data added to the database successfully!",
+        });
+        
+        // Refetch data to update the UI
+        await Promise.all([
+          refetchApps(),
+          refetchRepos(),
+          refetchBlogPosts(),
+          refetchCodeSamples()
+        ]);
+        
+        // Invalidate all queries to refresh data
+        queryClient.invalidateQueries();
+      } else {
+        toast({
+          title: "Error",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       setSeedResult({
         success: false,

@@ -405,7 +405,7 @@ export async function seedDatabase() {
     
     if (postsEmpty) {
       for (const post of sampleBlogPosts) {
-        await apiRequest('/api/blog-posts', {
+        await apiRequest('/api/blog', {
           method: 'POST',
           body: JSON.stringify(post),
         });
