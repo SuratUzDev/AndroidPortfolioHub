@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { contactFormSchema, commentFormSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { migrateAllData } from "./firebase-to-postgres";
+import { upload, handleFileUpload, handleMultipleFileUpload } from "./upload";
+import fs from 'fs';
+import path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all apps for portfolio section
@@ -217,6 +220,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete comment" });
     }
   });
+
+  // Create a public uploads directory if it doesn't exist
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  fs.promises.mkdir(uploadsDir, { recursive: true })
+    .then(() => console.log(`Uploads directory created: ${uploadsDir}`))
+    .catch(err => console.error(`Error creating uploads directory: ${err}`));
+
+  // File upload endpoints
+  // Single file upload
+  app.post("/api/upload/:category", upload.single('file'), handleFileUpload);
+  
+  // Multiple files upload
+  app.post("/api/upload/:category/multiple", upload.array('files', 10), handleMultipleFileUpload);
 
 
   const httpServer = createServer(app);
