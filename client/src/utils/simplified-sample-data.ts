@@ -415,7 +415,30 @@ fun GreetingCard(name: String) {
 // Function to check if a collection is empty (using REST API instead of Firebase)
 async function isCollectionEmpty(collectionName: string): Promise<boolean> {
   try {
-    const response = await fetch(`/api/${collectionName.toLowerCase()}`);
+    let endpoint = '';
+    
+    // Map collection names to their correct API endpoints
+    switch (collectionName.toLowerCase()) {
+      case 'apps':
+        endpoint = '/api/apps';
+        break;
+      case 'githubrepos':
+        endpoint = '/api/github-repos';
+        break;
+      case 'blogposts':
+        endpoint = '/api/blog';
+        break;
+      case 'codesamples':
+        endpoint = '/api/code-samples';
+        break;
+      case 'profile':
+        endpoint = '/api/profile';
+        break;
+      default:
+        endpoint = `/api/${collectionName.toLowerCase()}`;
+    }
+    
+    const response = await fetch(endpoint);
     if (!response.ok) {
       return true; // Assume empty if error
     }
