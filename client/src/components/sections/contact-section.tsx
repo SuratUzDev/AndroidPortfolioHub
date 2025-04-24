@@ -2,6 +2,7 @@ import { PROFILE } from "@/lib/constants";
 import ContactForm from "@/components/ui/contact-form";
 import { RectangleEllipsis, MapPinIcon } from "lucide-react";
 import { FaTwitter, FaLinkedin } from "react-icons/fa";
+import { handleImageError, getImageUrl } from "@/utils/image-utils";
 
 export default function ContactSection() {
   return (
@@ -23,9 +24,10 @@ export default function ContactSection() {
           <div className="space-y-8">
             <div>
               <img 
-                src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&h=400&q=80" 
+                src="/public/uploads/better-placeholder.png" 
                 alt="Coding environment" 
                 className="rounded-xl shadow-lg mb-8 w-full"
+                onError={(e) => handleImageError(e)}
               />
             </div>
 

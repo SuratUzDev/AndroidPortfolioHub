@@ -4,8 +4,16 @@ import {
   MapPinIcon, 
   GraduationCapIcon 
 } from "lucide-react";
+import { handleImageError, getImageUrl } from "@/utils/image-utils";
+import { useQuery } from "@tanstack/react-query";
+import { getProfile } from "@/services/firebaseService";
 
 export default function AboutSection() {
+  // Get profile data
+  const { data: profileData } = useQuery({
+    queryKey: ['/api/profile'],
+    queryFn: getProfile
+  });
   return (
     <section id="about" className="py-20 scroll-mt-20">
       <div className="container mx-auto px-4">
@@ -37,9 +45,10 @@ export default function AboutSection() {
           <div className="bg-white dark:bg-dark-elevated rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center mb-6">
               <img 
-                src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&h=150&q=80" 
-                alt="Sulton UzDev" 
+                src={getImageUrl(profileData?.avatarUrl, 'profile')} 
+                alt={profileData?.name || "Sulton UzDev"} 
                 className="w-20 h-20 rounded-full object-cover"
+                onError={(e) => handleImageError(e, 'profile')}
               />
               <div className="ml-4">
                 <h3 className="font-inter font-semibold text-xl">{PROFILE.name}</h3>

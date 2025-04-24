@@ -58,8 +58,9 @@ export function AuthorDisplay({
     <div className="flex items-center">
       <Avatar className={`${avatarSizes[size]} mr-3`}>
         <AvatarImage 
-          src={profile?.avatarUrl} 
-          alt={authorName} 
+          src={getImageUrl(profile?.avatarUrl, 'profile')} 
+          alt={authorName}
+          onError={(e) => handleImageError(e, 'profile')}
         />
         <AvatarFallback>{authorInitials}</AvatarFallback>
       </Avatar>
