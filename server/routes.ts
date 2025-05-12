@@ -478,38 +478,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Direct fallback for placeholders
+  /**
+   * GET /api/uploads/placeholder.png
+   * Direct fallback endpoint for placeholder images
+   * This endpoint provides a cascade of fallbacks from SVG to PNG formats
+   * 
+   * @route GET /api/uploads/placeholder.png
+   * @returns {File} The placeholder image file
+   * @throws {404} If no placeholder is available
+   */
   app.get('/api/uploads/placeholder.png', (req, res) => {
-    // Try better placeholder first
-    const betterPlaceholderPath = path.join(uploadsDir, 'better-placeholder.png');
-    if (fs.existsSync(betterPlaceholderPath)) {
-      console.log(`Serving better placeholder for direct access`);
+    // Try SVG better placeholder first (preferred format)
+    const betterPlaceholderSvgPath = path.join(uploadsDir, 'better-placeholder.svg');
+    if (fs.existsSync(betterPlaceholderSvgPath)) {
+      console.log(`Serving SVG better placeholder for direct access`);
       res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
-      res.sendFile(betterPlaceholderPath);
-    } else {
-      // Fall back to original
-      const placeholderPath = path.join(uploadsDir, 'placeholder.png');
-      if (fs.existsSync(placeholderPath)) {
-        console.log(`Serving original placeholder for direct access`);
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.sendFile(betterPlaceholderSvgPath);
+    } 
+    // Then try PNG better placeholder
+    else {
+      const betterPlaceholderPngPath = path.join(uploadsDir, 'better-placeholder.png');
+      if (fs.existsSync(betterPlaceholderPngPath)) {
+        console.log(`Serving PNG better placeholder for direct access`);
         res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
-        res.sendFile(placeholderPath);
-      } else {
-        res.status(404).json({ error: 'Placeholder not found' });
+        res.sendFile(betterPlaceholderPngPath);
+      } 
+      // Fall back to original
+      else {
+        const placeholderPath = path.join(uploadsDir, 'placeholder.png');
+        if (fs.existsSync(placeholderPath)) {
+          console.log(`Serving original placeholder for direct access`);
+          res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
+          res.sendFile(placeholderPath);
+        } else {
+          res.status(404).json({ error: 'Placeholder not found' });
+        }
       }
     }
   });
 
-  // File upload endpoints
-  // Single file upload
+  /**
+   * GET /api/uploads/better-placeholder.svg
+   * Direct access endpoint for SVG placeholder
+   * This allows for direct referencing of the SVG placeholder in image sources
+   * 
+   * @route GET /api/uploads/better-placeholder.svg
+   * @returns {File} The SVG placeholder image
+   * @throws {404} If the SVG placeholder is not found
+   */
+  app.get('/api/uploads/better-placeholder.svg', (req, res) => {
+    const svgPlaceholderPath = path.join(uploadsDir, 'better-placeholder.svg');
+    if (fs.existsSync(svgPlaceholderPath)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.sendFile(svgPlaceholderPath);
+    } else {
+      // Fallback to PNG if SVG doesn't exist
+      const pngPlaceholderPath = path.join(uploadsDir, 'better-placeholder.png');
+      if (fs.existsSync(pngPlaceholderPath)) {
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24h
+        res.sendFile(pngPlaceholderPath);
+      } else {
+        res.status(404).json({ error: 'SVG placeholder not found' });
+      }
+    }
+  });
+  
+  /**
+   * POST /api/upload/:category
+   * Uploads a single image file and saves it to the appropriate category folder
+   * 
+   * @route POST /api/upload/:category
+   * @param {string} req.params.category - The category folder to save the file in (apps, blog, profile, etc.)
+   * @param {File} req.file - The uploaded file (must be an image)
+   * @returns {Object} JSON response with the URL and metadata of the saved file
+   * @throws {400} If no file is uploaded or the file is not an image
+   * @throws {500} If file saving fails
+   */
   app.post("/api/upload/:category", upload.single('file'), handleFileUpload);
   
-  // Multiple files upload
+  /**
+   * POST /api/upload/:category/multiple
+   * Uploads multiple image files and saves them to the appropriate category folder
+   * 
+   * @route POST /api/upload/:category/multiple
+   * @param {string} req.params.category - The category folder to save the files in (apps, blog, profile, etc.)
+   * @param {File[]} req.files - The uploaded files (must be images)
+   * @returns {Object} JSON response with URLs and metadata of all saved files
+   * @throws {400} If no files are uploaded or the files are not images
+   * @throws {500} If file saving fails
+   */
   app.post("/api/upload/:category/multiple", upload.array('files', 10), handleMultipleFileUpload);
   
-  // Image download endpoint
+  /**
+   * POST /api/uploads/download
+   * Downloads an external image and saves it locally
+   * This endpoint is used for migrating external images to the local server
+   * 
+   * @route POST /api/uploads/download
+   * @param {Object} req.body - Request body
+   * @param {string} req.body.imageUrl - The URL of the external image to download
+   * @param {string} [req.body.folder='general'] - The category folder to save the image in
+   * @returns {Object} JSON response with the original and local URLs of the image
+   * @throws {400} If the image URL is missing or invalid
+   * @throws {500} If the download or saving process fails
+   */
   app.post("/api/uploads/download", downloadImage);
   
-  // Image migration endpoint (for admin use)
+  /**
+   * POST /api/admin/migrate-images
+   * Admin-only endpoint to migrate all external images to local storage
+   * This endpoint processes all content types and replaces external URLs with local ones
+   * 
+   * @route POST /api/admin/migrate-images
+   * @returns {Object} JSON response with migration statistics
+   * @throws {500} If the migration process fails
+   */
   app.post("/api/admin/migrate-images", handleImageMigration);
 
   const httpServer = createServer(app);

@@ -15,12 +15,24 @@
  * @property {string} blog - Placeholder specifically styled for blog content
  * @property {string} profile - Placeholder specifically styled for profile images
  */
+/**
+ * URLs to SVG placeholder images for different content categories
+ * Each category has its own visually distinct placeholder with unique colors and designs
+ * to make it immediately obvious what type of content is missing its image
+ */
 const PLACEHOLDER_URLS = {
-  default: '/api/uploads/better-placeholder.png',
+  default: '/api/uploads/better-placeholder.svg',
   apps: '/api/uploads/apps/category-placeholder.svg',
   blog: '/api/uploads/blog/category-placeholder.svg',
-  profile: '/api/uploads/profile/category-placeholder.svg'
+  profile: '/api/uploads/profile/category-placeholder.svg',
+  general: '/api/uploads/general/category-placeholder.svg'
 };
+
+/**
+ * Type definition for content categories used in the application
+ * This allows for type checking and autocompletion when specifying image categories
+ */
+export type ImageCategory = 'apps' | 'blog' | 'profile' | 'general';
 
 /**
  * Handles image loading errors by setting an appropriate placeholder image.
@@ -29,7 +41,7 @@ const PLACEHOLDER_URLS = {
  * placeholders, then a general placeholder, and finally a basic API placeholder.
  * 
  * @param {React.SyntheticEvent<HTMLImageElement, Event>} event - The error event from the image
- * @param {('apps'|'blog'|'profile')} [category] - Optional category to determine which placeholder to use
+ * @param {ImageCategory} [category] - Optional category to determine which placeholder to use
  * @returns {void} - This function does not return a value but modifies the image source directly
  * 
  * @example
@@ -42,7 +54,7 @@ const PLACEHOLDER_URLS = {
  */
 export function handleImageError(
   event: React.SyntheticEvent<HTMLImageElement, Event>, 
-  category?: 'apps' | 'blog' | 'profile'
+  category?: ImageCategory
 ): void {
   const imgElement = event.currentTarget;
   
@@ -55,8 +67,20 @@ export function handleImageError(
   
   // Fallback to API endpoint if direct access fails
   imgElement.onerror = () => {
-    imgElement.src = '/api/uploads/placeholder.png';
-    imgElement.onerror = null; // Prevent infinite loop
+    // If SVG fails, try PNG version
+    if (imgElement.src.endsWith('.svg')) {
+      const pngUrl = imgElement.src.replace('.svg', '.png');
+      imgElement.src = pngUrl;
+      
+      // Final fallback for catastrophic failures
+      imgElement.onerror = () => {
+        imgElement.src = '/api/uploads/placeholder.png';
+        imgElement.onerror = null; // Prevent infinite loop
+      };
+    } else {
+      imgElement.src = '/api/uploads/placeholder.png';
+      imgElement.onerror = null; // Prevent infinite loop
+    }
   };
 }
 
@@ -66,7 +90,7 @@ export function handleImageError(
  * It's designed to be used when setting image sources in components.
  * 
  * @param {string|null|undefined} url - The original image URL to process
- * @param {('apps'|'blog'|'profile')} [category] - Optional category to determine which placeholder to use
+ * @param {ImageCategory} [category] - Optional category to determine which placeholder to use
  * @returns {string} - Either the original URL (if it's a valid local URL) or an appropriate placeholder URL
  * 
  * @example
@@ -76,7 +100,7 @@ export function handleImageError(
  *   alt={post.title} 
  * />
  */
-export function getImageUrl(url: string | null | undefined, category?: 'apps' | 'blog' | 'profile'): string {
+export function getImageUrl(url: string | null | undefined, category?: ImageCategory): string {
   // If no URL is provided, return appropriate placeholder
   if (!url) {
     return category ? PLACEHOLDER_URLS[category] : PLACEHOLDER_URLS.default;
@@ -89,5 +113,6 @@ export function getImageUrl(url: string | null | undefined, category?: 'apps' | 
   }
   
   // FORCE PLACEHOLDERS - don't even try to load potentially broken images
+  // Using SVG placeholders by default as they scale better and are more visible
   return category ? PLACEHOLDER_URLS[category] : PLACEHOLDER_URLS.default;
 }
