@@ -1,3 +1,11 @@
+/**
+ * Data Storage Module
+ *
+ * This module provides the data access layer for the application.
+ * It defines an interface for storage operations and implements it for
+ * both in-memory storage (used in development) and database storage (for production).
+ */
+
 import { 
   users, User, InsertUser,
   apps, App, InsertApp,
@@ -8,48 +16,239 @@ import {
   comments, Comment, InsertComment
 } from "@shared/schema";
 
-// Interface for all storage operations
+/**
+ * Interface for all storage operations in the application
+ * 
+ * This interface serves as a contract for different storage implementations (MemStorage, DatabaseStorage)
+ * and ensures consistent data access patterns throughout the application.
+ */
 export interface IStorage {
-  // User operations
+  /**
+   * User Operations
+   */
+
+  /**
+   * Retrieves a user by their ID
+   * 
+   * @param {number} id - The unique identifier of the user to retrieve
+   * @returns {Promise<User | undefined>} The user object if found, undefined otherwise
+   */
   getUser(id: number): Promise<User | undefined>;
+
+  /**
+   * Retrieves a user by their username
+   * 
+   * @param {string} username - The username to search for
+   * @returns {Promise<User | undefined>} The user object if found, undefined otherwise
+   */
   getUserByUsername(username: string): Promise<User | undefined>;
+
+  /**
+   * Creates a new user in the storage
+   * 
+   * @param {InsertUser} user - The user data to create
+   * @returns {Promise<User>} The created user with assigned ID
+   */
   createUser(user: InsertUser): Promise<User>;
   
-  // App operations
+  /**
+   * App Operations
+   */
+
+  /**
+   * Retrieves all apps
+   * 
+   * @returns {Promise<App[]>} Array of all app objects
+   */
   getAllApps(): Promise<App[]>;
+
+  /**
+   * Retrieves an app by its ID
+   * 
+   * @param {number} id - The unique identifier of the app to retrieve
+   * @returns {Promise<App | undefined>} The app object if found, undefined otherwise
+   */
   getApp(id: number): Promise<App | undefined>;
+
+  /**
+   * Creates a new app in the storage
+   * 
+   * @param {InsertApp} app - The app data to create
+   * @returns {Promise<App>} The created app with assigned ID
+   */
   createApp(app: InsertApp): Promise<App>;
   
-  // GitHub Repo operations
+  /**
+   * GitHub Repository Operations
+   */
+
+  /**
+   * Retrieves all GitHub repositories
+   * 
+   * @returns {Promise<GithubRepo[]>} Array of all GitHub repository objects
+   */
   getAllGithubRepos(): Promise<GithubRepo[]>;
+
+  /**
+   * Retrieves a GitHub repository by its ID
+   * 
+   * @param {number} id - The unique identifier of the repository to retrieve
+   * @returns {Promise<GithubRepo | undefined>} The repository object if found, undefined otherwise
+   */
   getGithubRepo(id: number): Promise<GithubRepo | undefined>;
+
+  /**
+   * Creates a new GitHub repository in the storage
+   * 
+   * @param {InsertGithubRepo} repo - The repository data to create
+   * @returns {Promise<GithubRepo>} The created repository with assigned ID
+   */
   createGithubRepo(repo: InsertGithubRepo): Promise<GithubRepo>;
   
-  // Blog Post operations
+  /**
+   * Blog Post Operations
+   */
+
+  /**
+   * Retrieves all blog posts
+   * 
+   * @returns {Promise<BlogPost[]>} Array of all blog post objects
+   */
   getAllBlogPosts(): Promise<BlogPost[]>;
+
+  /**
+   * Retrieves a blog post by its slug
+   * 
+   * @param {string} slug - The unique slug identifier of the blog post
+   * @returns {Promise<BlogPost | undefined>} The blog post if found, undefined otherwise
+   */
   getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+
+  /**
+   * Retrieves the featured blog post
+   * 
+   * @returns {Promise<BlogPost | undefined>} The featured blog post if found, undefined otherwise
+   */
   getFeaturedBlogPost(): Promise<BlogPost | undefined>;
+
+  /**
+   * Creates a new blog post in the storage
+   * 
+   * @param {InsertBlogPost} post - The blog post data to create
+   * @returns {Promise<BlogPost>} The created blog post with assigned ID
+   */
   createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
   
-  // Contact Message operations
+  /**
+   * Contact Message Operations
+   */
+
+  /**
+   * Retrieves all contact messages
+   * 
+   * @returns {Promise<ContactMessage[]>} Array of all contact message objects
+   */
   getAllContactMessages(): Promise<ContactMessage[]>;
+
+  /**
+   * Retrieves a contact message by its ID
+   * 
+   * @param {number} id - The unique identifier of the message to retrieve
+   * @returns {Promise<ContactMessage | undefined>} The message if found, undefined otherwise
+   */
   getContactMessage(id: number): Promise<ContactMessage | undefined>;
+
+  /**
+   * Creates a new contact message in the storage
+   * 
+   * @param {InsertContactMessage} message - The contact message data to create
+   * @returns {Promise<ContactMessage>} The created message with assigned ID
+   */
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
   
-  // Code Sample operations
+  /**
+   * Code Sample Operations
+   */
+
+  /**
+   * Retrieves all code samples
+   * 
+   * @returns {Promise<CodeSample[]>} Array of all code sample objects
+   */
   getAllCodeSamples(): Promise<CodeSample[]>;
+
+  /**
+   * Retrieves a code sample by its ID
+   * 
+   * @param {number} id - The unique identifier of the code sample to retrieve
+   * @returns {Promise<CodeSample | undefined>} The code sample if found, undefined otherwise
+   */
   getCodeSample(id: number): Promise<CodeSample | undefined>;
+
+  /**
+   * Creates a new code sample in the storage
+   * 
+   * @param {InsertCodeSample} sample - The code sample data to create
+   * @returns {Promise<CodeSample>} The created code sample with assigned ID
+   */
   createCodeSample(sample: InsertCodeSample): Promise<CodeSample>;
   
-  // Comment operations
+  /**
+   * Comment Operations
+   */
+
+  /**
+   * Retrieves all comments for a blog post
+   * 
+   * @param {number} blogPostId - The ID of the blog post to get comments for
+   * @returns {Promise<Comment[]>} Array of comment objects for the specified blog post
+   */
   getCommentsByBlogPostId(blogPostId: number): Promise<Comment[]>;
+
+  /**
+   * Retrieves a comment by its ID
+   * 
+   * @param {number} id - The unique identifier of the comment to retrieve
+   * @returns {Promise<Comment | undefined>} The comment if found, undefined otherwise
+   */
   getComment(id: number): Promise<Comment | undefined>;
+
+  /**
+   * Creates a new comment in the storage
+   * 
+   * @param {InsertComment} comment - The comment data to create
+   * @returns {Promise<Comment>} The created comment with assigned ID
+   */
   createComment(comment: InsertComment): Promise<Comment>;
+
+  /**
+   * Approves a comment for public visibility
+   * 
+   * @param {number} id - The ID of the comment to approve
+   * @returns {Promise<Comment>} The updated comment with approved status
+   */
   approveComment(id: number): Promise<Comment>;
+
+  /**
+   * Deletes a comment from storage
+   * 
+   * @param {number} id - The ID of the comment to delete
+   * @returns {Promise<void>} A promise that resolves when the deletion is complete
+   */
   deleteComment(id: number): Promise<void>;
 }
 
+/**
+ * In-Memory Storage Implementation
+ * 
+ * This class implements the IStorage interface using JavaScript Maps for in-memory storage.
+ * It's primarily used for development and testing purposes as all data is lost when the server restarts.
+ */
 export class MemStorage implements IStorage {
+  /**
+   * Map collections for storing each entity type
+   * Each map uses numeric IDs as keys and entity objects as values
+   */
   private users: Map<number, User>;
   private apps: Map<number, App>;
   private githubRepos: Map<number, GithubRepo>;
@@ -57,6 +256,10 @@ export class MemStorage implements IStorage {
   private contactMessages: Map<number, ContactMessage>;
   private codeSamples: Map<number, CodeSample>;
   
+  /**
+   * Auto-increment ID counters for each entity type
+   * These counters ensure unique numeric IDs are assigned to each new entity
+   */
   private userCurrentId: number;
   private appCurrentId: number;
   private repoCurrentId: number;
@@ -64,7 +267,13 @@ export class MemStorage implements IStorage {
   private messageCurrentId: number;
   private sampleCurrentId: number;
 
+  /**
+   * Initializes the in-memory storage with empty collections
+   * Sets up ID counters to start from 1
+   * Populates storage with sample data for development
+   */
   constructor() {
+    // Initialize empty collections
     this.users = new Map();
     this.apps = new Map();
     this.githubRepos = new Map();
@@ -72,6 +281,7 @@ export class MemStorage implements IStorage {
     this.contactMessages = new Map();
     this.codeSamples = new Map();
     
+    // Start IDs from 1
     this.userCurrentId = 1;
     this.appCurrentId = 1;
     this.repoCurrentId = 1;
@@ -83,17 +293,34 @@ export class MemStorage implements IStorage {
     this.initializeData();
   }
 
-  // User operations
+  /**
+   * Retrieves a user by their ID
+   * 
+   * @param {number} id - The unique identifier of the user to retrieve
+   * @returns {Promise<User | undefined>} The user object if found, undefined otherwise
+   */
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
   }
 
+  /**
+   * Retrieves a user by their username
+   * 
+   * @param {string} username - The username to search for
+   * @returns {Promise<User | undefined>} The user object if found, undefined otherwise
+   */
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
       (user) => user.username === username,
     );
   }
 
+  /**
+   * Creates a new user in the storage
+   * 
+   * @param {InsertUser} insertUser - The user data to create
+   * @returns {Promise<User>} The created user with assigned ID
+   */
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
     const user: User = { ...insertUser, id };
@@ -101,11 +328,21 @@ export class MemStorage implements IStorage {
     return user;
   }
   
-  // App operations
+  /**
+   * Retrieves all apps
+   * 
+   * @returns {Promise<App[]>} Array of all app objects
+   */
   async getAllApps(): Promise<App[]> {
     return Array.from(this.apps.values());
   }
   
+  /**
+   * Retrieves an app by its ID
+   * 
+   * @param {number} id - The unique identifier of the app to retrieve
+   * @returns {Promise<App | undefined>} The app object if found, undefined otherwise
+   */
   async getApp(id: number): Promise<App | undefined> {
     return this.apps.get(id);
   }
