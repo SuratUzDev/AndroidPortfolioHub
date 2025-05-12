@@ -1,3 +1,11 @@
+/**
+ * API Routes Module
+ * 
+ * This module defines all the API routes for the application.
+ * It handles authentication, data validation, and connects frontend requests
+ * to the appropriate storage operations.
+ */
+
 import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -10,10 +18,30 @@ import { handleImageMigration } from "./image-migration";
 import fs from 'fs';
 import path from 'path';
 
+/**
+ * Registers all API routes and middleware to the Express application
+ * 
+ * This function configures all the routes needed by the application, including:
+ * - Static file serving
+ * - CRUD operations for apps, blog posts, GitHub repos, etc.
+ * - Authentication endpoints
+ * - File upload and image handling
+ * 
+ * @param {Express} app - The Express application instance
+ * @returns {Promise<Server>} A promise that resolves to the HTTP server instance
+ */
 export async function registerRoutes(app: Express): Promise<Server> {
   // Serve static files from public directory
   app.use('/public', express.static(path.join(process.cwd(), 'public')));
-  // Get all apps for portfolio section
+  
+  /**
+   * GET /api/apps
+   * Retrieves all apps from the database for display in the portfolio section
+   * 
+   * @route GET /api/apps
+   * @returns {Array<App>} JSON array of all app objects
+   * @throws {500} If database operation fails
+   */
   app.get("/api/apps", async (req, res) => {
     try {
       const apps = await storage.getAllApps();
@@ -23,9 +51,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Create a new app
+  /**
+   * POST /api/apps
+   * Creates a new app entry in the database
+   * 
+   * @route POST /api/apps
+   * @param {Object} req.body - The app data to create (must match insertAppSchema)
+   * @returns {App} JSON object of the created app with assigned ID
+   * @throws {400} If validation fails
+   * @throws {500} If database operation fails
+   */
   app.post("/api/apps", async (req, res) => {
     try {
+      // Validate request body against schema
       const result = insertAppSchema.safeParse(req.body);
       
       if (!result.success) {
@@ -33,6 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validationError.message });
       }
       
+      // Create app in storage
       const app = await storage.createApp(result.data);
       res.status(201).json(app);
     } catch (error) {
@@ -41,7 +80,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all GitHub repos
+  /**
+   * GET /api/github-repos
+   * Retrieves all GitHub repositories for display in the open source section
+   * 
+   * @route GET /api/github-repos
+   * @returns {Array<GithubRepo>} JSON array of all GitHub repository objects
+   * @throws {500} If database operation fails
+   */
   app.get("/api/github-repos", async (req, res) => {
     try {
       const repos = await storage.getAllGithubRepos();
@@ -51,9 +97,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Create a new GitHub repo
+  /**
+   * POST /api/github-repos
+   * Creates a new GitHub repository entry in the database
+   * 
+   * @route POST /api/github-repos
+   * @param {Object} req.body - The repository data (must match insertGithubRepoSchema)
+   * @returns {GithubRepo} JSON object of the created repository with assigned ID
+   * @throws {400} If validation fails
+   * @throws {500} If database operation fails
+   */
   app.post("/api/github-repos", async (req, res) => {
     try {
+      // Validate request body against schema
       const result = insertGithubRepoSchema.safeParse(req.body);
       
       if (!result.success) {
@@ -61,6 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validationError.message });
       }
       
+      // Create repository in storage
       const repo = await storage.createGithubRepo(result.data);
       res.status(201).json(repo);
     } catch (error) {
@@ -69,7 +126,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all blog posts
+  /**
+   * GET /api/blog
+   * Retrieves all blog posts for the blog section
+   * 
+   * @route GET /api/blog
+   * @returns {Array<BlogPost>} JSON array of all blog post objects
+   * @throws {500} If database operation fails
+   */
   app.get("/api/blog", async (req, res) => {
     try {
       const posts = await storage.getAllBlogPosts();
@@ -79,7 +143,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get featured blog post
+  /**
+   * GET /api/blog/featured
+   * Retrieves the featured blog post for display on the homepage
+   * 
+   * @route GET /api/blog/featured
+   * @returns {BlogPost} JSON object of the featured blog post
+   * @throws {404} If no featured post is found
+   * @throws {500} If database operation fails
+   */
   app.get("/api/blog/featured", async (req, res) => {
     try {
       const featuredPost = await storage.getFeaturedBlogPost();
@@ -92,7 +164,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get blog post by slug
+  /**
+   * GET /api/blog/:slug
+   * Retrieves a specific blog post by its URL slug
+   * 
+   * @route GET /api/blog/:slug
+   * @param {string} req.params.slug - The unique slug identifier for the blog post
+   * @returns {BlogPost} JSON object of the requested blog post
+   * @throws {404} If blog post is not found
+   * @throws {500} If database operation fails
+   */
   app.get("/api/blog/:slug", async (req, res) => {
     try {
       const post = await storage.getBlogPostBySlug(req.params.slug);
@@ -105,7 +186,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all code samples
+  /**
+   * GET /api/code-samples
+   * Retrieves all code samples for the developer showcase section
+   * 
+   * @route GET /api/code-samples
+   * @returns {Array<CodeSample>} JSON array of all code sample objects
+   * @throws {500} If database operation fails
+   */
   app.get("/api/code-samples", async (req, res) => {
     try {
       const codeSamples = await storage.getAllCodeSamples();
@@ -115,9 +203,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Submit contact form
+  /**
+   * POST /api/contact
+   * Submits a contact form message to the database
+   * 
+   * @route POST /api/contact
+   * @param {Object} req.body - The contact message data (must match contactFormSchema)
+   * @returns {Object} Confirmation message with the message ID
+   * @throws {400} If validation fails
+   * @throws {500} If database operation fails
+   */
   app.post("/api/contact", async (req, res) => {
     try {
+      // Validate request body against schema
       const result = contactFormSchema.safeParse(req.body);
       
       if (!result.success) {
@@ -125,6 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validationError.message });
       }
       
+      // Create contact message in storage
       const contactMessage = await storage.createContactMessage(result.data);
       res.status(201).json({ message: "Message sent successfully", id: contactMessage.id });
     } catch (error) {
@@ -132,7 +231,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Firebase to PostgreSQL migration endpoint (admin only)
+  /**
+   * POST /api/admin/migrate
+   * Admin-only endpoint to migrate data from Firebase to PostgreSQL or create sample data
+   * 
+   * This endpoint checks if Firebase credentials are available:
+   * - If available, it migrates existing Firebase data to PostgreSQL
+   * - If not available, it creates sample data in PostgreSQL instead
+   * 
+   * @route POST /api/admin/migrate
+   * @returns {Object} Status of the migration operation
+   * @throws {500} If migration fails
+   */
   app.post("/api/admin/migrate", async (req, res) => {
     try {
       console.log("Starting data migration from Firebase to PostgreSQL...");
@@ -180,7 +290,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Update profile
+  /**
+   * POST /api/profile
+   * Updates the developer profile information
+   * 
+   * @route POST /api/profile
+   * @param {Object} req.body - The complete profile data
+   * @returns {Profile} JSON object of the updated profile
+   * @throws {500} If database operation fails
+   */
   app.post("/api/profile", async (req, res) => {
     try {
       const profile = req.body;
@@ -192,7 +310,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get comments for a blog post
+  /**
+   * GET /api/blog/:blogPostId/comments
+   * Retrieves all approved comments for a specific blog post
+   * 
+   * @route GET /api/blog/:blogPostId/comments
+   * @param {string} req.params.blogPostId - The ID of the blog post to get comments for
+   * @returns {Array<Comment>} JSON array of comment objects
+   * @throws {400} If blog post ID is invalid
+   * @throws {500} If database operation fails
+   */
   app.get("/api/blog/:blogPostId/comments", async (req, res) => {
     try {
       const blogPostId = parseInt(req.params.blogPostId);
@@ -208,7 +335,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Submit a comment on a blog post
+  /**
+   * POST /api/blog/:blogPostId/comments
+   * Submits a new comment on a blog post (requires admin approval before becoming visible)
+   * 
+   * @route POST /api/blog/:blogPostId/comments
+   * @param {string} req.params.blogPostId - The ID of the blog post to comment on
+   * @param {Object} req.body - The comment data (must match commentFormSchema)
+   * @returns {Object} Confirmation message with the created comment object
+   * @throws {400} If blog post ID is invalid or validation fails
+   * @throws {500} If database operation fails
+   */
   app.post("/api/blog/:blogPostId/comments", async (req, res) => {
     try {
       const blogPostId = parseInt(req.params.blogPostId);
