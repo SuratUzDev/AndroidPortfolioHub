@@ -1,3 +1,10 @@
+/**
+ * File Upload Module
+ * 
+ * This module provides utilities for handling file uploads to the server.
+ * It supports single and multiple image file uploads, organized by category.
+ */
+
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -5,10 +12,23 @@ import { Request, Response } from 'express';
 import multer from 'multer';
 import { log } from './vite';
 
-// Ensure uploads directory exists
+/**
+ * Path to the server's uploads directory
+ * All uploaded files will be stored in subdirectories of this path
+ * 
+ * @constant {string} UPLOADS_DIR
+ */
 const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
 
-// Create directories if they don't exist
+/**
+ * Creates a directory if it doesn't already exist
+ * This function is used to ensure category subdirectories are available
+ * before saving uploaded files
+ * 
+ * @param {string} dirPath - The absolute path of the directory to create
+ * @returns {Promise<void>} A promise that resolves when the directory exists
+ * @throws Will throw an error if directory creation fails
+ */
 async function ensureDirectoryExists(dirPath: string): Promise<void> {
   try {
     await fs.mkdir(dirPath, { recursive: true });
@@ -19,8 +39,21 @@ async function ensureDirectoryExists(dirPath: string): Promise<void> {
   }
 }
 
-// Initialize multer storage
+/**
+ * Multer storage configuration
+ * Configures where and how uploaded files will be stored
+ * 
+ * @constant {multer.StorageEngine} storage
+ */
 const storage = multer.diskStorage({
+  /**
+   * Determines the destination directory for uploaded files
+   * Creates category subdirectories as needed
+   * 
+   * @param {Request} req - The Express request object
+   * @param {Express.Multer.File} file - Information about the uploaded file
+   * @param {Function} cb - Callback function to set the destination
+   */
   destination: async (req, file, cb) => {
     try {
       // Get category from the request (apps, blog-posts, etc.)
@@ -35,6 +68,15 @@ const storage = multer.diskStorage({
       cb(error as any, '');
     }
   },
+  
+  /**
+   * Generates a unique filename for the uploaded file
+   * Uses a random hex string plus the original file extension
+   * 
+   * @param {Request} req - The Express request object
+   * @param {Express.Multer.File} file - Information about the uploaded file
+   * @param {Function} cb - Callback function to set the filename
+   */
   filename: (req, file, cb) => {
     // Generate unique filename with original extension
     const fileExt = path.extname(file.originalname);
@@ -43,7 +85,12 @@ const storage = multer.diskStorage({
   }
 });
 
-// Create multer upload instance
+/**
+ * Configured multer middleware for handling file uploads
+ * Limits uploads to images only, with a maximum size of 5MB
+ * 
+ * @constant {multer.Multer} upload
+ */
 export const upload = multer({ 
   storage,
   limits: {
@@ -58,7 +105,26 @@ export const upload = multer({
   }
 });
 
-// Handler for file uploads
+/**
+ * Express route handler for single file uploads
+ * Processes a single file upload and returns metadata about the saved file
+ * 
+ * @param {Request} req - The Express request object, including uploaded file in req.file
+ * @param {Response} res - The Express response object
+ * @returns {Promise<Response>} JSON response with file metadata or error message
+ * 
+ * @example
+ * // Route definition:
+ * app.post("/api/upload/:category", upload.single('file'), handleFileUpload);
+ * 
+ * // Response format on success:
+ * // {
+ * //   url: "/uploads/apps/a1b2c3d4e5f6.jpg",
+ * //   originalName: "app-icon.jpg",
+ * //   size: 45678,
+ * //   mimetype: "image/jpeg"
+ * // }
+ */
 export async function handleFileUpload(req: Request, res: Response) {
   try {
     if (!req.file) {
@@ -82,7 +148,36 @@ export async function handleFileUpload(req: Request, res: Response) {
   }
 }
 
-// Handler for multiple file uploads
+/**
+ * Express route handler for multiple file uploads
+ * Processes multiple files and returns metadata about all saved files
+ * 
+ * @param {Request} req - The Express request object, including uploaded files in req.files
+ * @param {Response} res - The Express response object
+ * @returns {Promise<Response>} JSON response with file metadata array or error message
+ * 
+ * @example
+ * // Route definition:
+ * app.post("/api/upload/:category/multiple", upload.array('files', 10), handleMultipleFileUpload);
+ * 
+ * // Response format on success:
+ * // {
+ * //   files: [
+ * //     {
+ * //       url: "/uploads/blog/a1b2c3d4e5f6.jpg",
+ * //       originalName: "blog-image1.jpg",
+ * //       size: 45678,
+ * //       mimetype: "image/jpeg"
+ * //     },
+ * //     {
+ * //       url: "/uploads/blog/g7h8i9j0k1l2.png",
+ * //       originalName: "blog-image2.png",
+ * //       size: 98765,
+ * //       mimetype: "image/png"
+ * //     }
+ * //   ]
+ * // }
+ */
 export async function handleMultipleFileUpload(req: Request, res: Response) {
   try {
     if (!req.files || Array.isArray(req.files) && req.files.length === 0) {

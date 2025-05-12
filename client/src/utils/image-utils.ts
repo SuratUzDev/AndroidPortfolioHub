@@ -1,8 +1,20 @@
 /**
  * Utility functions for handling images
+ * This module provides a set of functions to handle image loading, error handling,
+ * and placeholder image management throughout the application.
  */
 
-// Placeholder image paths - using SVG for better reliability
+/**
+ * Predefined URLs for placeholder images categorized by content type.
+ * These SVG-based placeholders ensure consistent and reliable fallback images
+ * in case the original images fail to load.
+ * 
+ * @constant {Object} PLACEHOLDER_URLS
+ * @property {string} default - General placeholder for miscellaneous content
+ * @property {string} apps - Placeholder specifically styled for app content
+ * @property {string} blog - Placeholder specifically styled for blog content
+ * @property {string} profile - Placeholder specifically styled for profile images
+ */
 const PLACEHOLDER_URLS = {
   default: '/api/uploads/better-placeholder.png',
   apps: '/api/uploads/apps/category-placeholder.svg',
@@ -11,14 +23,27 @@ const PLACEHOLDER_URLS = {
 };
 
 /**
- * Returns a function that handles image loading errors by setting a placeholder
- * @param {React.SyntheticEvent<HTMLImageElement, Event>} event - The error event
- * @param {string} category - Optional category for specific placeholder
+ * Handles image loading errors by setting an appropriate placeholder image.
+ * This function should be used in the onError event of image elements.
+ * It applies a cascading fallback mechanism: first trying category-specific 
+ * placeholders, then a general placeholder, and finally a basic API placeholder.
+ * 
+ * @param {React.SyntheticEvent<HTMLImageElement, Event>} event - The error event from the image
+ * @param {('apps'|'blog'|'profile')} [category] - Optional category to determine which placeholder to use
+ * @returns {void} - This function does not return a value but modifies the image source directly
+ * 
+ * @example
+ * // In a React component:
+ * <img 
+ *   src={imageUrl} 
+ *   alt="Description" 
+ *   onError={(e) => handleImageError(e, 'blog')} 
+ * />
  */
 export function handleImageError(
   event: React.SyntheticEvent<HTMLImageElement, Event>, 
   category?: 'apps' | 'blog' | 'profile'
-) {
+): void {
   const imgElement = event.currentTarget;
   
   // Use category-specific placeholder if available
@@ -36,9 +61,20 @@ export function handleImageError(
 }
 
 /**
- * Safely adds image loading error handling to an image URL
- * If the URL is already in the local uploads folder, returns it as is
- * If it's an external URL, returns the placeholder directly to ensure images are visible
+ * Processes an image URL and returns either the original URL or an appropriate placeholder.
+ * This function enforces the use of placeholders for external URLs to prevent broken images.
+ * It's designed to be used when setting image sources in components.
+ * 
+ * @param {string|null|undefined} url - The original image URL to process
+ * @param {('apps'|'blog'|'profile')} [category] - Optional category to determine which placeholder to use
+ * @returns {string} - Either the original URL (if it's a valid local URL) or an appropriate placeholder URL
+ * 
+ * @example
+ * // In a React component:
+ * <img 
+ *   src={getImageUrl(post.coverImageUrl, 'blog')} 
+ *   alt={post.title} 
+ * />
  */
 export function getImageUrl(url: string | null | undefined, category?: 'apps' | 'blog' | 'profile'): string {
   // If no URL is provided, return appropriate placeholder
